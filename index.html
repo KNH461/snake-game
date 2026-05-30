@@ -2,302 +2,41 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🐍 贪吃蛇</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 小游戏合集</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#eee;overflow-x:hidden;touch-action:none;padding:12px}
-.header{text-align:center;margin-bottom:8px}
-.header h1{font-size:1.6rem;text-shadow:0 0 10px #0f0}
-.score-bar{display:flex;gap:24px;margin-bottom:10px;font-size:1rem;justify-content:center}
-.score-bar span{color:#0f0;font-weight:bold}
-.main-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
-canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,0.2);background:#16213e;flex-shrink:0}
-.leaderboard{background:rgba(0,255,0,0.05);border:1px solid rgba(0,255,0,0.3);border-radius:8px;padding:14px;min-width:220px;max-width:280px}
-.leaderboard h3{font-size:1.1rem;margin-bottom:10px;color:#0f0;text-align:center}
-.lb-list{list-style:none;max-height:360px;overflow-y:auto}
-.lb-list li{display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.9rem}
-.lb-list li:first-child{color:#ffd700;font-weight:bold}
-.lb-list li:nth-child(2){color:#c0c0c0}
-.lb-list li:nth-child(3){color:#cd7f32}
-.lb-rank{width:28px;text-align:center}
-.lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px}
-.lb-score{font-weight:bold;color:#0f0;min-width:32px;text-align:right}
-.lb-status{text-align:center;font-size:0.75rem;color:#666;margin-top:8px}
-.lb-status.online{color:#0f0}
-.controls{display:none;margin-top:12px;gap:4px}
-.controls button{width:60px;height:60px;font-size:1.5rem;border:1px solid #0f0;background:rgba(0,255,0,0.1);color:#0f0;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
-.controls button:active{background:rgba(0,255,0,0.3)}
-.btn-row{display:flex;gap:4px;justify-content:center}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10}
-.overlay h2{font-size:2rem;margin-bottom:12px}
-.overlay p{font-size:1rem;margin-bottom:16px;color:#aaa}
-.overlay input{padding:10px 16px;font-size:1.1rem;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:8px;outline:none;width:200px;text-align:center;margin-bottom:12px}
-.overlay input::placeholder{color:rgba(0,255,0,0.3)}
-.overlay button{padding:12px 36px;font-size:1.1rem;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:8px;cursor:pointer}
-.overlay button:hover{background:rgba(0,255,0,0.15)}
-.overlay .sub{font-size:0.85rem;color:#666;margin-top:8px}
-#gameOverScreen .rank-info{font-size:1.2rem;color:#0f0;margin-bottom:12px}
-@media(pointer:coarse){.controls{display:flex;flex-direction:column;align-items:center}}
-@media(max-width:600px){
-  .main-wrap{flex-direction:column;align-items:center}
-  canvas{width:90vw!important;height:90vw!important}
-  .leaderboard{width:90vw;max-width:none}
+body{background:#1a1a2e;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#eee;display:flex;flex-direction:column;align-items:center;padding:40px 16px}
+h1{font-size:2.2rem;margin-bottom:8px;text-shadow:0 0 20px rgba(0,255,0,0.4)}
+.sub{color:#888;font-size:0.95rem;margin-bottom:40px}
+.games{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;max-width:700px}
+.game-card{
+  width:280px;background:rgba(0,255,0,0.04);border:1px solid rgba(0,255,0,0.2);
+  border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;
+  transition:all 0.2s;text-decoration:none;color:#eee;display:block;
 }
+.game-card:hover{transform:translateY(-4px);border-color:#0f0;box-shadow:0 8px 30px rgba(0,255,0,0.15)}
+.game-card .icon{font-size:4rem;margin-bottom:12px;display:block}
+.game-card h2{font-size:1.3rem;margin-bottom:8px;color:#0f0}
+.game-card p{font-size:0.85rem;color:#888;line-height:1.5}
+.footer{margin-top:auto;padding-top:40px;color:#444;font-size:0.8rem}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <h1>🐍 贪吃蛇</h1>
-  <div class="score-bar">
-    得分: <span id="score">0</span>
-    &nbsp;|&nbsp;
-    最高: <span id="best">0</span>
-  </div>
+<h1>🎮 小游戏合集</h1>
+<p class="sub">和朋友们一起比拼吧</p>
+<div class="games">
+  <a class="game-card" href="snake.html">
+    <span class="icon">🐍</span>
+    <h2>贪吃蛇</h2>
+    <p>经典贪吃蛇，吃食物长长身体<br>支持键盘、触屏和虚拟按钮</p>
+  </a>
+  <a class="game-card" href="tetris.html">
+    <span class="icon">🧱</span>
+    <h2>俄罗斯方块</h2>
+    <p>经典方块消除，挑战你的极限<br>支持键盘和触屏操作</p>
+  </a>
 </div>
-
-<div class="main-wrap">
-  <div>
-    <canvas id="game" width="400" height="400"></canvas>
-    <div class="controls" id="controls">
-      <div class="btn-row"><button id="btnU">⬆️</button></div>
-      <div class="btn-row">
-        <button id="btnL">⬅️</button>
-        <button id="btnD">⬇️</button>
-        <button id="btnR">➡️</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="leaderboard">
-    <h3>🏆 排行榜</h3>
-    <ul class="lb-list" id="lbList">
-      <li style="justify-content:center;color:#666">加载中...</li>
-    </ul>
-    <div class="lb-status" id="lbStatus">等待连接...</div>
-  </div>
-</div>
-
-<div class="overlay" id="startScreen">
-  <h2>🐍 贪吃蛇</h2>
-  <p>输入昵称开始游戏</p>
-  <input type="text" id="nicknameInput" placeholder="你的昵称" maxlength="12" autocomplete="off">
-  <br>
-  <button onclick="startGame()">开始游戏</button>
-  <div class="sub">方向键 / WASD / 滑动 / 按钮控制</div>
-</div>
-
-<div class="overlay" id="gameOverScreen" style="display:none">
-  <h2>💀 游戏结束</h2>
-  <p>得分: <span id="finalScore">0</span></p>
-  <div class="rank-info" id="rankInfo"></div>
-  <button onclick="startGame()">再来一局</button>
-</div>
-
-<script>
-// ============ CONFIG ============
-const API_KEY = '$2a$10$JDS9gl1LtJJ1GfLQy013YOEMq8xzl5QLHxoKGghwH7uIRxVbZQZNi';
-const BIN_ID = '6a1b0396ddf5aa59f778b27f';
-const API_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
-const REFRESH_INTERVAL = 30000;
-
-// ============ GAME ============
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const GRID = 20;
-const COLS = canvas.width / GRID;
-const ROWS = canvas.height / GRID;
-
-let snake, dir, nextDir, food, score, speed, loop, alive;
-let nickname = localStorage.getItem('snake_nick') || '';
-let localBest = parseInt(localStorage.getItem('snake_best') || '0');
-
-const nickInput = document.getElementById('nicknameInput');
-if (nickname) nickInput.value = nickname;
-document.getElementById('best').textContent = localBest;
-
-function init() {
-  snake = [{x: Math.floor(COLS/2), y: Math.floor(ROWS/2)}];
-  dir = {x:1, y:0}; nextDir = {x:1, y:0};
-  score = 0; speed = 130; alive = true;
-  placeFood();
-  document.getElementById('score').textContent = 0;
-}
-
-function placeFood() {
-  let pos;
-  do { pos = {x:Math.floor(Math.random()*COLS), y:Math.floor(Math.random()*ROWS)}; }
-  while (snake.some(s => s.x===pos.x && s.y===pos.y));
-  food = pos;
-}
-
-function draw() {
-  ctx.fillStyle = '#16213e';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgba(255,255,255,0.03)';
-  for (let x=0;x<COLS;x++) for (let y=0;y<ROWS;y++) ctx.fillRect(x*GRID+1,y*GRID+1,GRID-2,GRID-2);
-
-  ctx.fillStyle='#ff6b6b'; ctx.shadowColor='#ff6b6b'; ctx.shadowBlur=8;
-  ctx.beginPath(); ctx.arc(food.x*GRID+GRID/2,food.y*GRID+GRID/2,GRID/2-2,0,Math.PI*2); ctx.fill();
-  ctx.shadowBlur=0;
-
-  snake.forEach((seg,i) => {
-    const r = 1 - i/snake.length;
-    const g = Math.floor(200+55*r);
-    ctx.fillStyle = i===0 ? '#0f0' : `rgb(0,${g},0)`;
-    ctx.shadowColor = i===0 ? '#0f0' : 'transparent';
-    ctx.shadowBlur = i===0 ? 6 : 0;
-    ctx.fillRect(seg.x*GRID+1,seg.y*GRID+1,GRID-2,GRID-2);
-    ctx.shadowBlur=0;
-  });
-}
-
-function update() {
-  if (!alive) return;
-  dir = nextDir;
-  const head = {x:snake[0].x+dir.x, y:snake[0].y+dir.y};
-  if (head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS) return die();
-  if (snake.some(s=>s.x===head.x&&s.y===head.y)) return die();
-  snake.unshift(head);
-  if (head.x===food.x&&head.y===food.y) {
-    score++;
-    document.getElementById('score').textContent = score;
-    placeFood();
-    if (speed>60){speed-=2;clearInterval(loop);loop=setInterval(tick,speed);}
-  } else { snake.pop(); }
-}
-
-function tick(){update();draw();}
-
-function die() {
-  alive = false;
-  clearInterval(loop);
-  document.getElementById('finalScore').textContent = score;
-  document.getElementById('gameOverScreen').style.display = 'flex';
-
-  if (score > localBest) { localBest = score; localStorage.setItem('snake_best', localBest); }
-  document.getElementById('best').textContent = localBest;
-
-  if (nickname && score > 0) submitScore(nickname, score);
-}
-
-function startGame() {
-  nickname = nickInput.value.trim() || '匿名玩家';
-  localStorage.setItem('snake_nick', nickname);
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('gameOverScreen').style.display = 'none';
-  init(); draw();
-  clearInterval(loop);
-  loop = setInterval(tick, speed);
-}
-
-document.addEventListener('keydown', e => {
-  const map={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0},W:{x:0,y:-1},S:{x:0,y:1},A:{x:-1,y:0},D:{x:1,y:0}};
-  if(map[e.key]){const nd=map[e.key];if(nd.x+dir.x!==0||nd.y+dir.y!==0)nextDir=nd;e.preventDefault();}
-});
-
-let tx,ty;
-canvas.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
-canvas.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
-  if(Math.abs(dx)<20&&Math.abs(dy)<20)return;
-  let nd;
-  if(Math.abs(dx)>Math.abs(dy))nd=dx>0?{x:1,y:0}:{x:-1,y:0};
-  else nd=dy>0?{x:0,y:1}:{x:0,y:-1};
-  if(nd.x+dir.x!==0||nd.y+dir.y!==0)nextDir=nd;
-},{passive:true});
-
-const btnMap={btnU:{x:0,y:-1},btnD:{x:0,y:1},btnL:{x:-1,y:0},btnR:{x:1,y:0}};
-Object.entries(btnMap).forEach(([id,nd])=>{
-  document.getElementById(id).addEventListener('pointerdown',e=>{
-    if(nd.x+dir.x!==0||nd.y+dir.y!==0)nextDir=nd;e.preventDefault();
-  });
-});
-
-// ============ LEADERBOARD (jsonbin.io) ============
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-async function fetchScores() {
-  try {
-    const res = await fetch(API_URL + '/latest', {
-      headers: { 'X-Master-Key': API_KEY }
-    });
-    if (!res.ok) throw new Error('fetch failed');
-    const data = await res.json();
-    renderLeaderboard(data.record.players || {});
-    document.getElementById('lbStatus').textContent = `✅ 已同步 · ${new Date().toLocaleTimeString()}`;
-    document.getElementById('lbStatus').className = 'lb-status online';
-  } catch (err) {
-    document.getElementById('lbStatus').textContent = '⚠️ 同步失败';
-    document.getElementById('lbStatus').className = 'lb-status';
-  }
-}
-
-function renderLeaderboard(players) {
-  const sorted = Object.entries(players)
-    .map(([name, data]) => ({name, score: data.best || 0}))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 20);
-
-  const list = document.getElementById('lbList');
-  if (sorted.length === 0) {
-    list.innerHTML = '<li style="justify-content:center;color:#666">还没有记录，来一局吧！</li>';
-    return;
-  }
-  list.innerHTML = sorted.map((p, i) => {
-    const medals = ['🥇','🥈','🥉'];
-    const rank = i < 3 ? medals[i] : `${i+1}`;
-    const hl = p.name === nickname ? ' style="background:rgba(0,255,0,0.08)"' : '';
-    return `<li${hl}><span class="lb-rank">${rank}</span><span class="lb-name">${esc(p.name)}</span><span class="lb-score">${p.score}</span></li>`;
-  }).join('');
-}
-
-async function submitScore(name, newScore) {
-  document.getElementById('lbStatus').textContent = '⏳ 提交中...';
-  try {
-    // Read current data
-    const getRes = await fetch(API_URL + '/latest', {
-      headers: { 'X-Master-Key': API_KEY }
-    });
-    const getData = await getRes.json();
-    const scores = getData.record;
-    if (!scores.players) scores.players = {};
-
-    const existing = scores.players[name];
-    const isBest = !existing || newScore > (existing.best || 0);
-    scores.players[name] = {
-      best: isBest ? newScore : (existing.best || 0),
-      games: ((existing && existing.games) || 0) + 1,
-      lastPlayed: Date.now()
-    };
-
-    const allScores = Object.values(scores.players).map(p => p.best).sort((a,b) => b-a);
-    const rank = allScores.indexOf(scores.players[name].best) + 1;
-    document.getElementById('rankInfo').textContent = isBest
-      ? `🎉 新纪录！排名第 ${rank}`
-      : `当前排名第 ${rank}（历史最高 ${scores.players[name].best}）`;
-
-    // Update
-    await fetch(API_URL, {
-      method: 'PUT',
-      headers: {
-        'X-Master-Key': API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(scores)
-    });
-
-    renderLeaderboard(scores.players);
-    document.getElementById('lbStatus').textContent = `✅ 已提交 · ${new Date().toLocaleTimeString()}`;
-  } catch (err) {
-    document.getElementById('lbStatus').textContent = '⚠️ 提交失败';
-  }
-}
-
-fetchScores();
-setInterval(fetchScores, REFRESH_INTERVAL);
-init(); draw();
-</script>
+<p class="footer">Made with ❤️</p>
 </body>
 </html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🧱 俄罗斯方块</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#eee;overflow-x:hidden;touch-action:none;padding:12px}
+.back{align-self:flex-start;margin-bottom:4px}
+.back a{color:#0f0;text-decoration:none;font-size:0.9rem}
+.back a:hover{text-decoration:underline}
+.header{text-align:center;margin-bottom:8px}
+.header h1{font-size:1.6rem;text-shadow:0 0 10px #0f0}
+.score-bar{display:flex;gap:20px;margin-bottom:10px;font-size:0.95rem;justify-content:center;flex-wrap:wrap}
+.score-bar span{color:#0f0;font-weight:bold}
+.main-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.game-area{position:relative}
+canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,0.2);background:#16213e}
+.leaderboard{background:rgba(0,255,0,0.05);border:1px solid rgba(0,255,0,0.3);border-radius:8px;padding:14px;min-width:220px;max-width:280px}
+.leaderboard h3{font-size:1.1rem;margin-bottom:10px;color:#0f0;text-align:center}
+.lb-list{list-style:none;max-height:360px;overflow-y:auto}
+.lb-list li{display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.9rem}
+.lb-list li:first-child{color:#ffd700;font-weight:bold}
+.lb-list li:nth-child(2){color:#c0c0c0}
+.lb-list li:nth-child(3){color:#cd7f32}
+.lb-rank{width:28px;text-align:center}
+.lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px}
+.lb-score{font-weight:bold;color:#0f0;min-width:32px;text-align:right}
+.lb-status{text-align:center;font-size:0.75rem;color:#666;margin-top:8px}
+.lb-status.online{color:#0f0}
+.touch-controls{display:none;margin-top:12px;gap:6px}
+.touch-controls button{width:64px;height:64px;font-size:1.6rem;border:1px solid #0f0;background:rgba(0,255,0,0.1);color:#0f0;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+.touch-controls button:active{background:rgba(0,255,0,0.3)}
+.tbtn-row{display:flex;gap:6px;justify-content:center}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10}
+.overlay h2{font-size:2rem;margin-bottom:12px}
+.overlay p{font-size:1rem;margin-bottom:16px;color:#aaa}
+.overlay input{padding:10px 16px;font-size:1.1rem;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:8px;outline:none;width:200px;text-align:center;margin-bottom:12px}
+.overlay input::placeholder{color:rgba(0,255,0,0.3)}
+.overlay button{padding:12px 36px;font-size:1.1rem;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:8px;cursor:pointer}
+.overlay button:hover{background:rgba(0,255,0,0.15)}
+.overlay .sub{font-size:0.85rem;color:#666;margin-top:8px}
+#gameOverScreen .rank-info{font-size:1.2rem;color:#0f0;margin-bottom:12px}
+@media(pointer:coarse){.touch-controls{display:flex;flex-direction:column;align-items:center}}
+@media(max-width:600px){
+  .main-wrap{flex-direction:column;align-items:center}
+  canvas{width:90vw!important;height:auto!important}
+  .leaderboard{width:90vw;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="back"><a href="index.html">← 返回游戏列表</a></div>
+
+<div class="header">
+  <h1>🧱 俄罗斯方块</h1>
+  <div class="score-bar">
+    得分: <span id="score">0</span>
+    &nbsp;|&nbsp;
+    等级: <span id="level">1</span>
+    &nbsp;|&nbsp;
+    最高: <span id="best">0</span>
+  </div>
+</div>
+
+<div class="main-wrap">
+  <div>
+    <div class="game-area">
+      <canvas id="game" width="250" height="500"></canvas>
+    </div>
+    <div class="touch-controls" id="touchControls">
+      <div class="tbtn-row">
+        <button id="tRotate">🔄</button>
+      </div>
+      <div class="tbtn-row">
+        <button id="tLeft">⬅️</button>
+        <button id="tDown">⬇️</button>
+        <button id="tRight">➡️</button>
+      </div>
+      <div class="tbtn-row">
+        <button id="tDrop" style="width:140px">⏬ 直落</button>
+      </div>
+    </div>
+  </div>
+  <div class="leaderboard">
+    <h3>🏆 排行榜</h3>
+    <ul class="lb-list" id="lbList"><li style="justify-content:center;color:#666">加载中...</li></ul>
+    <div class="lb-status" id="lbStatus">等待连接...</div>
+  </div>
+</div>
+
+<div class="overlay" id="startScreen">
+  <h2>🧱 俄罗斯方块</h2>
+  <p>输入昵称开始游戏</p>
+  <input type="text" id="nicknameInput" placeholder="你的昵称" maxlength="12" autocomplete="off">
+  <br><button onclick="startGame()">开始游戏</button>
+  <div class="sub">方向键移动 · 上键旋转 · 空格直落</div>
+</div>
+
+<div class="overlay" id="gameOverScreen" style="display:none">
+  <h2>💀 游戏结束</h2>
+  <p>得分: <span id="finalScore">0</span></p>
+  <div class="rank-info" id="rankInfo"></div>
+  <button onclick="startGame()">再来一局</button>
+</div>
+
+<script>
+const API_KEY = '***';
+const BIN_ID = '6a1b0748ddf5aa59f778bc7a';
+const API_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+const REFRESH_INTERVAL = 30000;
+
+// ============ TETRIS ENGINE ============
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const COLS = 10;
+const ROWS = 20;
+const BLOCK = canvas.width / COLS;
+
+const COLORS = ['#0f0','#f00','#00f','#ff0','#f0f','#0ff','#fa0'];
+const SHAPES = [
+  [[1,1,1,1]],
+  [[1,1],[1,1]],
+  [[0,1,0],[1,1,1]],
+  [[1,1,0],[0,1,1]],
+  [[0,1,1],[1,1,0]],
+  [[1,0,0],[1,1,1]],
+  [[0,0,1],[1,1,1]]
+];
+
+let board, piece, pieceX, pieceY, pieceColor, nextPiece, nextColor;
+let score, level, lines, speed, loop, alive;
+let nickname = localStorage.getItem('tetris_nick') || '';
+let localBest = parseInt(localStorage.getItem('tetris_best') || '0');
+
+const nickInput = document.getElementById('nicknameInput');
+if (nickname) nickInput.value = nickname;
+document.getElementById('best').textContent = localBest;
+
+function randomPiece() {
+  const i = Math.floor(Math.random() * SHAPES.length);
+  return { shape: SHAPES[i], color: COLORS[i] };
+}
+
+function init() {
+  board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+  score = 0; level = 1; lines = 0; speed = 500; alive = true;
+  nextPiece = randomPiece();
+  spawnPiece();
+  updateUI();
+}
+
+function spawnPiece() {
+  piece = nextPiece.shape;
+  pieceColor = nextPiece.color;
+  nextPiece = randomPiece();
+  pieceX = Math.floor((COLS - piece[0].length) / 2);
+  pieceY = 0;
+  if (collides(piece, pieceX, pieceY)) {
+    alive = false;
+    gameOver();
+  }
+}
+
+function collides(shape, px, py) {
+  for (let r = 0; r < shape.length; r++)
+    for (let c = 0; c < shape[r].length; c++)
+      if (shape[r][c]) {
+        const nx = px + c, ny = py + r;
+        if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+        if (ny >= 0 && board[ny][nx]) return true;
+      }
+  return false;
+}
+
+function merge() {
+  for (let r = 0; r < piece.length; r++)
+    for (let c = 0; c < piece[r].length; c++)
+      if (piece[r][c]) {
+        const ny = pieceY + r;
+        if (ny >= 0) board[ny][pieceX + c] = pieceColor;
+      }
+}
+
+function clearLines() {
+  let cleared = 0;
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (board[r].every(c => c !== 0)) {
+      board.splice(r, 1);
+      board.unshift(Array(COLS).fill(0));
+      cleared++;
+      r++;
+    }
+  }
+  if (cleared > 0) {
+    const pts = [0, 100, 300, 500, 800];
+    score += (pts[cleared] || 800) * level;
+    lines += cleared;
+    level = Math.floor(lines / 10) + 1;
+    speed = Math.max(80, 500 - (level - 1) * 40);
+    clearInterval(loop);
+    loop = setInterval(tick, speed);
+    updateUI();
+  }
+}
+
+function rotate(shape) {
+  const rows = shape.length, cols = shape[0].length;
+  const rotated = Array.from({length: cols}, () => Array(rows).fill(0));
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++)
+      rotated[c][rows - 1 - r] = shape[r][c];
+  return rotated;
+}
+
+function move(dx, dy) {
+  if (!alive) return;
+  const nx = pieceX + dx, ny = pieceY + dy;
+  if (!collides(piece, nx, ny)) {
+    pieceX = nx; pieceY = ny;
+    return true;
+  }
+  return false;
+}
+
+function rotatePiece() {
+  if (!alive) return;
+  const rotated = rotate(piece);
+  // Wall kick
+  const kicks = [0, -1, 1, -2, 2];
+  for (const kick of kicks) {
+    if (!collides(rotated, pieceX + kick, pieceY)) {
+      piece = rotated;
+      pieceX += kick;
+      return;
+    }
+  }
+}
+
+function drop() {
+  if (!alive) return;
+  while (move(0, 1)) {}
+  lock();
+}
+
+function lock() {
+  merge();
+  clearLines();
+  spawnPiece();
+}
+
+function tick() {
+  if (!alive) return;
+  if (!move(0, 1)) lock();
+}
+
+function updateUI() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('level').textContent = level;
+}
+
+function draw() {
+  // Background
+  ctx.fillStyle = '#16213e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x <= COLS; x++) {
+    ctx.beginPath(); ctx.moveTo(x * BLOCK, 0); ctx.lineTo(x * BLOCK, canvas.height); ctx.stroke();
+  }
+  for (let y = 0; y <= ROWS; y++) {
+    ctx.beginPath(); ctx.moveTo(0, y * BLOCK); ctx.lineTo(canvas.width, y * BLOCK); ctx.stroke();
+  }
+
+  // Board
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (board[r][c]) {
+        drawBlock(c, r, board[r][c]);
+      }
+
+  // Current piece
+  if (piece && alive) {
+    for (let r = 0; r < piece.length; r++)
+      for (let c = 0; c < piece[r].length; c++)
+        if (piece[r][c])
+          drawBlock(pieceX + c, pieceY + r, pieceColor);
+
+    // Ghost piece
+    let ghostY = pieceY;
+    while (!collides(piece, pieceX, ghostY + 1)) ghostY++;
+    if (ghostY !== pieceY) {
+      ctx.globalAlpha = 0.2;
+      for (let r = 0; r < piece.length; r++)
+        for (let c = 0; c < piece[r].length; c++)
+          if (piece[r][c])
+            drawBlock(pieceX + c, ghostY + r, pieceColor);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+function drawBlock(x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x * BLOCK + 1, y * BLOCK + 1, BLOCK - 2, BLOCK - 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.fillRect(x * BLOCK + 1, y * BLOCK + 1, BLOCK - 2, 3);
+  ctx.fillRect(x * BLOCK + 1, y * BLOCK + 1, 3, BLOCK - 2);
+}
+
+function gameOver() {
+  alive = false;
+  clearInterval(loop);
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('gameOverScreen').style.display = 'flex';
+  if (score > localBest) { localBest = score; localStorage.setItem('tetris_best', localBest); }
+  document.getElementById('best').textContent = localBest;
+  if (nickname && score > 0) submitScore(nickname, score);
+}
+
+function startGame() {
+  nickname = nickInput.value.trim() || '匿名玩家';
+  localStorage.setItem('tetris_nick', nickname);
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameOverScreen').style.display = 'none';
+  init();
+  clearInterval(loop);
+  loop = setInterval(tick, speed);
+  draw();
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (!alive) return;
+  switch(e.key) {
+    case 'ArrowLeft': case 'a': case 'A': move(-1, 0); e.preventDefault(); break;
+    case 'ArrowRight': case 'd': case 'D': move(1, 0); e.preventDefault(); break;
+    case 'ArrowDown': case 's': case 'S': move(0, 1); score += 1; updateUI(); e.preventDefault(); break;
+    case 'ArrowUp': case 'w': case 'W': rotatePiece(); e.preventDefault(); break;
+    case ' ': drop(); e.preventDefault(); break;
+  }
+});
+
+// Touch controls
+document.getElementById('tLeft').addEventListener('pointerdown', e => { move(-1, 0); e.preventDefault(); });
+document.getElementById('tRight').addEventListener('pointerdown', e => { move(1, 0); e.preventDefault(); });
+document.getElementById('tDown').addEventListener('pointerdown', e => { move(0, 1); score += 1; updateUI(); e.preventDefault(); });
+document.getElementById('tRotate').addEventListener('pointerdown', e => { rotatePiece(); e.preventDefault(); });
+document.getElementById('tDrop').addEventListener('pointerdown', e => { drop(); e.preventDefault(); });
+
+// Swipe gestures on canvas
+let tx, ty;
+canvas.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, {passive: true});
+canvas.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  const dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) < 20 && Math.abs(dy) < 20) { rotatePiece(); return; }
+  if (Math.abs(dx) > Math.abs(dy)) { move(dx > 0 ? 1 : -1, 0); }
+  else if (dy > 0) { move(0, 1); score += 1; updateUI(); }
+  else { rotatePiece(); }
+}, {passive: true});
+
+// ============ LEADERBOARD ============
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function fetchScores(){try{const r=await fetch(API_URL+'/latest',{headers:{'X-Master-Key':API_KEY}});if(!r.ok)throw 0;const d=await r.json();renderLB(d.record.players||{});document.getElementById('lbStatus').textContent=`✅ 已同步 · ${new Date().toLocaleTimeString()}`;document.getElementById('lbStatus').className='lb-status online';}catch(e){document.getElementById('lbStatus').textContent='⚠️ 同步失败';document.getElementById('lbStatus').className='lb-status';}}
+function renderLB(p){const s=Object.entries(p).map(([n,d])=>({name:n,score:d.best||0})).sort((a,b)=>b.score-a.score).slice(0,20);const l=document.getElementById('lbList');if(!s.length){l.innerHTML='<li style="justify-content:center;color:#666">还没有记录，来一局吧！</li>';return;}l.innerHTML=s.map((p,i)=>{const m=['🥇','🥈','🥉'];const r=i<3?m[i]:`${i+1}`;const h=p.name===nickname?' style="background:rgba(0,255,0,0.08)"':'';return`<li${h}><span class="lb-rank">${r}</span><span class="lb-name">${esc(p.name)}</span><span class="lb-score">${p.score}</span></li>`;}).join('');}
+async function submitScore(name,ns){document.getElementById('lbStatus').textContent='⏳ 提交中...';try{const gr=await fetch(API_URL+'/latest',{headers:{'X-Master-Key':API_KEY}});const gd=await gr.json();const scores=gd.record;if(!scores.players)scores.players={};const ex=scores.players[name];const ib=!ex||ns>(ex.best||0);scores.players[name]={best:ib?ns:(ex.best||0),games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};const all=Object.values(scores.players).map(p=>p.best).sort((a,b)=>b-a);const rank=all.indexOf(scores.players[name].best)+1;document.getElementById('rankInfo').textContent=ib?`🎉 新纪录！排名第 ${rank}`:`当前排名第 ${rank}（历史最高 ${scores.players[name].best}）`;await fetch(API_URL,{method:'PUT',headers:{'X-Master-Key':API_KEY,'Content-Type':'application/json'},body:JSON.stringify(scores)});renderLB(scores.players);document.getElementById('lbStatus').textContent=`✅ 已提交 · ${new Date().toLocaleTimeString()}`;}catch(e){document.getElementById('lbStatus').textContent='⚠️ 提交失败';}}
+
+fetchScores();setInterval(fetchScores,REFRESH_INTERVAL);init();draw();
+</script>
+</body>
+</html>
