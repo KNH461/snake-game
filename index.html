@@ -95,12 +95,12 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
   <button onclick="startGame()">再来一局</button>
 </div>
 
-<script src="config.js"></script>
 <script>
 // ============ CONFIG ============
+const GH_TOKEN = '***';
 const GH_REPO = 'KNH461/snake-game';
 const SCORES_PATH = 'scores.json';
-const REFRESH_INTERVAL = 30000; // 30s
+const REFRESH_INTERVAL = 30000;
 
 // ============ GAME ============
 const canvas = document.getElementById('game');
@@ -113,7 +113,6 @@ let snake, dir, nextDir, food, score, speed, loop, alive;
 let nickname = localStorage.getItem('snake_nick') || '';
 let localBest = parseInt(localStorage.getItem('snake_best') || '0');
 
-// Pre-fill nickname
 const nickInput = document.getElementById('nicknameInput');
 if (nickname) nickInput.value = nickname;
 document.getElementById('best').textContent = localBest;
@@ -177,11 +176,9 @@ function die() {
   document.getElementById('finalScore').textContent = score;
   document.getElementById('gameOverScreen').style.display = 'flex';
 
-  // Update local best
   if (score > localBest) { localBest = score; localStorage.setItem('snake_best', localBest); }
   document.getElementById('best').textContent = localBest;
 
-  // Submit to leaderboard
   if (nickname && score > 0) submitScore(nickname, score);
 }
 
@@ -195,13 +192,11 @@ function startGame() {
   loop = setInterval(tick, speed);
 }
 
-// keyboard
 document.addEventListener('keydown', e => {
   const map={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0},W:{x:0,y:-1},S:{x:0,y:1},A:{x:-1,y:0},D:{x:1,y:0}};
   if(map[e.key]){const nd=map[e.key];if(nd.x+dir.x!==0||nd.y+dir.y!==0)nextDir=nd;e.preventDefault();}
 });
 
-// touch swipe
 let tx,ty;
 canvas.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
 canvas.addEventListener('touchend',e=>{
@@ -213,7 +208,6 @@ canvas.addEventListener('touchend',e=>{
   if(nd.x+dir.x!==0||nd.y+dir.y!==0)nextDir=nd;
 },{passive:true});
 
-// mobile buttons
 const btnMap={btnU:{x:0,y:-1},btnD:{x:0,y:1},btnL:{x:-1,y:0},btnR:{x:1,y:0}};
 Object.entries(btnMap).forEach(([id,nd])=>{
   document.getElementById(id).addEventListener('pointerdown',e=>{
@@ -221,8 +215,8 @@ Object.entries(btnMap).forEach(([id,nd])=>{
   });
 });
 
-// ============ LEADERBOARD (GitHub API) ============
-let scoresSha = null;
+// ============ LEADERBOARD ============
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 async function fetchScores() {
   try {
@@ -231,7 +225,6 @@ async function fetchScores() {
     });
     if (!res.ok) throw new Error('fetch failed');
     const data = await res.json();
-    scoresSha = data.sha;
     const content = JSON.parse(atob(data.content));
     renderLeaderboard(content.players || {});
     document.getElementById('lbStatus').textContent = `✅ 已同步 · ${new Date().toLocaleTimeString()}`;
@@ -239,13 +232,12 @@ async function fetchScores() {
   } catch (err) {
     document.getElementById('lbStatus').textContent = '⚠️ 同步失败';
     document.getElementById('lbStatus').className = 'lb-status';
-    console.error('Fetch scores error:', err);
   }
 }
 
 function renderLeaderboard(players) {
   const sorted = Object.entries(players)
-    .map(([name, data]) => ({name, score: data.best || 0, games: data.games || 0}))
+    .map(([name, data]) => ({name, score: data.best || 0}))
     .sort((a, b) => b.score - a.score)
     .slice(0, 20);
 
@@ -254,81 +246,61 @@ function renderLeaderboard(players) {
     list.innerHTML = '<li style="justify-content:center;color:#666">还没有记录，来一局吧！</li>';
     return;
   }
-
   list.innerHTML = sorted.map((p, i) => {
     const medals = ['🥇','🥈','🥉'];
     const rank = i < 3 ? medals[i] : `${i+1}`;
-    const highlight = p.name === nickname ? ' style="background:rgba(0,255,0,0.08)"' : '';
-    return `<li${highlight}><span class="lb-rank">${rank}</span><span class="lb-name">${esc(p.name)}</span><span class="lb-score">${p.score}</span></li>`;
+    const hl = p.name === nickname ? ' style="background:rgba(0,255,0,0.08)"' : '';
+    return `<li${hl}><span class="lb-rank">${rank}</span><span class="lb-name">${esc(p.name)}</span><span class="lb-score">${p.score}</span></li>`;
   }).join('');
 }
 
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
 async function submitScore(name, newScore) {
   document.getElementById('lbStatus').textContent = '⏳ 提交中...';
-
   try {
-    // Fetch current data
-    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${SCORES_PATH}`, {
+    const getRes = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${SCORES_PATH}`, {
       headers: { 'Authorization': `token ${GH_TOKEN}` }
     });
-    if (!res.ok) throw new Error('fetch failed');
-    const data = await res.json();
-    scoresSha = data.sha;
-    const scores = JSON.parse(atob(data.content));
+    const getData = await getRes.json();
+    const sha = getData.sha;
+    const scores = JSON.parse(atob(getData.content));
     if (!scores.players) scores.players = {};
 
     const existing = scores.players[name];
     const isBest = !existing || newScore > (existing.best || 0);
-
-    // Update player data
     scores.players[name] = {
       best: isBest ? newScore : (existing.best || 0),
       games: ((existing && existing.games) || 0) + 1,
       lastPlayed: Date.now()
     };
 
-    // Show rank info
     const allScores = Object.values(scores.players).map(p => p.best).sort((a,b) => b-a);
     const rank = allScores.indexOf(scores.players[name].best) + 1;
     document.getElementById('rankInfo').textContent = isBest
       ? `🎉 新纪录！排名第 ${rank}`
       : `当前排名第 ${rank}（历史最高 ${scores.players[name].best}）`;
 
-    // Commit updated scores
-    const putRes = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${SCORES_PATH}`, {
+    await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${SCORES_PATH}`, {
       method: 'PUT',
       headers: {
         'Authorization': `token ${GH_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        message: `Update score: ${name} = ${newScore}`,
+        message: `Score: ${name} = ${newScore}`,
         content: btoa(unescape(encodeURIComponent(JSON.stringify(scores, null, 2)))),
-        sha: scoresSha
+        sha: sha
       })
     });
 
-    if (!putRes.ok) throw new Error('put failed');
-    const putData = await putRes.json();
-    scoresSha = putData.content.sha;
-
-    // Refresh leaderboard
     renderLeaderboard(scores.players);
     document.getElementById('lbStatus').textContent = `✅ 已提交 · ${new Date().toLocaleTimeString()}`;
   } catch (err) {
     document.getElementById('lbStatus').textContent = '⚠️ 提交失败';
-    document.getElementById('rankInfo').textContent = '（排行榜暂时不可用）';
-    console.error('Submit score error:', err);
   }
 }
 
-// Initial load + auto refresh
 fetchScores();
 setInterval(fetchScores, REFRESH_INTERVAL);
-
-// initial draw
 init(); draw();
 </script>
 </body>
