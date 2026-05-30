@@ -106,7 +106,7 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
 </div>
 
 <script>
-const API_KEY = '***';
+const API_KEY = '$2a$10$JDS9gl1LtJJ1GfLQy013YOEMq8xzl5QLHxoKGghwH7uIRxVbZQZNi';
 const BIN_ID = '6a1b0748ddf5aa59f778bc7a';
 const API_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
 const REFRESH_INTERVAL = 30000;
@@ -369,7 +369,7 @@ async function fetchScores(){try{const r=await fetch(API_URL+'/latest',{headers:
 function renderLB(p){const s=Object.entries(p).map(([n,d])=>({name:n,score:d.best||0})).sort((a,b)=>b.score-a.score).slice(0,20);const l=document.getElementById('lbList');if(!s.length){l.innerHTML='<li style="justify-content:center;color:#666">还没有记录，来一局吧！</li>';return;}l.innerHTML=s.map((p,i)=>{const m=['🥇','🥈','🥉'];const r=i<3?m[i]:`${i+1}`;const h=p.name===nickname?' style="background:rgba(0,255,0,0.08)"':'';return`<li${h}><span class="lb-rank">${r}</span><span class="lb-name">${esc(p.name)}</span><span class="lb-score">${p.score}</span></li>`;}).join('');}
 async function submitScore(name,ns){document.getElementById('lbStatus').textContent='⏳ 提交中...';try{const gr=await fetch(API_URL+'/latest',{headers:{'X-Master-Key':API_KEY}});const gd=await gr.json();const scores=gd.record;if(!scores.players)scores.players={};const ex=scores.players[name];const ib=!ex||ns>(ex.best||0);scores.players[name]={best:ib?ns:(ex.best||0),games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};const all=Object.values(scores.players).map(p=>p.best).sort((a,b)=>b-a);const rank=all.indexOf(scores.players[name].best)+1;document.getElementById('rankInfo').textContent=ib?`🎉 新纪录！排名第 ${rank}`:`当前排名第 ${rank}（历史最高 ${scores.players[name].best}）`;await fetch(API_URL,{method:'PUT',headers:{'X-Master-Key':API_KEY,'Content-Type':'application/json'},body:JSON.stringify(scores)});renderLB(scores.players);document.getElementById('lbStatus').textContent=`✅ 已提交 · ${new Date().toLocaleTimeString()}`;}catch(e){document.getElementById('lbStatus').textContent='⚠️ 提交失败';}}
 
-fetchScores();setInterval(fetchScores,REFRESH_INTERVAL);init();draw();
+fetchScores();setInterval(fetchScores,REFRESH_INTERVAL);init();draw();function gameLoop(){if(alive)draw();requestAnimationFrame(gameLoop);}gameLoop();
 </script>
 </body>
 </html>
