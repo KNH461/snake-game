@@ -242,7 +242,7 @@ setInterval(function(){if(ok)draw();},50);
 // ============ LEADERBOARD ============
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function lbOK(s){document.getElementById('ls').textContent='✅ 已同步 · '+new Date().toLocaleTimeString();document.getElementById('ls').className='lb-status online';}
-function lbErr(){document.getElementById('ls').textContent='⚠️ 同步失败';document.getElementById('ls').className='lb-status';}
+function lbErr(m){document.getElementById('ls').textContent='⚠️ '+(m||'同步失败');document.getElementById('ls').className='lb-status';}
 
 function renderLB(p){
   var s=[];for(var n in p)s.push({name:n,score:p[n].best||0});
@@ -264,10 +264,10 @@ function fetchScores(){
   x.setRequestHeader('X-Master-Key',AK);
   x.onload=function(){
     if(x.status===200){
-      try{var d=JSON.parse(x.responseText);renderLB(d.record.players||{});lbOK();}catch(e){lbErr();}
-    }else lbErr();
+      try{var d=JSON.parse(x.responseText);renderLB(d.record.players||{});lbOK();}catch(e){lbErr('数据解析失败');}
+    }else lbErr('HTTP '+x.status);
   };
-  x.onerror=function(){lbErr();};
+  x.onerror=function(e){lbErr('网络错误');};;
   x.send();
 }
 
@@ -277,7 +277,7 @@ function subSc(name,ns){
   g.open('GET',AU+'/latest',true);
   g.setRequestHeader('X-Master-Key',AK);
   g.onload=function(){
-    if(g.status!==200){lbErr();return;}
+    if(g.status!==200){lbErr('HTTP '+g.status);return;}
     try{
       var d=JSON.parse(g.responseText);var scores=d.record;if(!scores.players)scores.players={};
       var ex=scores.players[name];var ib=!ex||ns>(ex.best||0);
@@ -289,17 +289,16 @@ function subSc(name,ns){
       p.open('PUT',AU,true);
       p.setRequestHeader('X-Master-Key',AK);
       p.setRequestHeader('Content-Type','application/json');
-      p.onload=function(){if(p.status===200){renderLB(scores.players);lbOK();}else lbErr();};
-      p.onerror=function(){lbErr();};
+      p.onload=function(){if(p.status===200){renderLB(scores.players);lbOK();}else lbErr('提交失败 '+p.status);};
+      p.onerror=function(){lbErr('提交网络错误');};
       p.send(JSON.stringify(scores));
-    }catch(e){lbErr();}
+    }catch(e){lbErr('提交异常');}
   };
-  g.onerror=function(){lbErr();};
+  g.onerror=function(){lbErr('网络错误');};;
   g.send();
 }
 
 fetchScores();setInterval(fetchScores,RI);
-init();draw();
 </script>
 </body>
 </html>
