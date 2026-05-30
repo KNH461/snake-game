@@ -1,9 +1,3 @@
 {
-  "players": {
-    "测试玩家": {
-      "best": 5,
-      "games": 1,
-      "lastPlayed": 1000000
-    }
-  }
+  "players": {}
 }
