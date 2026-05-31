@@ -206,7 +206,7 @@ a{color:#0f0;text-decoration:none}
     <div class="action-bar">
       <button class="btn" id="btnStart" onclick="startBattle()">⚔️ 开始挂机</button>
       <button class="btn btn-stop" id="btnStop" onclick="stopBattle()" style="display:none">⏹ 停止</button>
-      <button class="btn btn-save" onclick="saveGame()">💾 保存</button>
+      <button class="btn" onclick="manualSave()" style="border-color:#ffd700;color:#ffd700">💾 手动保存</button>
     </div>
   </div>
 
@@ -553,33 +553,18 @@ function doRegister(){
   if(pass.length<4){setAuthMsg('密码至少4位');return;}
   setAuthMsg('注册中...','#888');
   sha256(pass).then(function(hash){
-    // Check if user exists
-    var x=new XMLHttpRequest();
-    x.open('GET',AU+'/latest',true);x.setRequestHeader('X-Master-Key',AK);
-    x.onload=function(){
-      if(x.status!==200){setAuthMsg('网络错误');return;}
-      try{
-        var d=JSON.parse(x.responseText);var record=d.record;
-        if(!record.users)record.users={};
-        if(record.users[user]){setAuthMsg('用户名已存在，请换一个');return;}
-        // Create user
-        record.users[user]={hash:hash,created:Date.now()};
-        var p=new XMLHttpRequest();
-        p.open('PUT',AU,true);p.setRequestHeader('X-Master-Key',AK);p.setRequestHeader('Content-Type','application/json');
-        p.onload=function(){
-          if(p.status===200){
-            currentUser=user;
-            localStorage.setItem('rpg_session',JSON.stringify({user:user,time:Date.now()}));
-            setAuthMsg('注册成功！','#0f0');
-            setTimeout(function(){enterGame();},500);
-          }else setAuthMsg('注册失败');
-        };
-        p.onerror=function(){setAuthMsg('网络错误');};
-        p.send(JSON.stringify(record));
-      }catch(e){setAuthMsg('网络错误');}
-    };
-    x.onerror=function(){setAuthMsg('网络错误');};
-    x.send();
+    binWrite(function(record){
+      if(!record.users)record.users={};
+      if(record.users[user]){
+        setAuthMsg('用户名已存在，请换一个');
+        return; // don't write
+      }
+      record.users[user]={hash:hash,created:Date.now()};
+      currentUser=user;
+      localStorage.setItem('rpg_session',JSON.stringify({user:user,time:Date.now()}));
+      setAuthMsg('注册成功！','#0f0');
+      setTimeout(function(){enterGame();},500);
+    });
   });
 }
 
@@ -671,30 +656,23 @@ function buildSaveData(){
 
 function saveGame(){
   P.lastSave=Date.now();
-  // Save locally (instant)
   try{localStorage.setItem('rpg_save_'+P.name,JSON.stringify(buildSaveData()));}catch(e){}
-  // Save to cloud (async)
   saveToCloud();
+}
+
+function manualSave(){
+  saveGame();
+  addLog('💾 已保存到本地 + 云端','info');
 }
 
 function saveToCloud(){
   if(!currentUser)return;
   var saveData=buildSaveData();
-  var g=new XMLHttpRequest();
-  g.open('GET',AU+'/latest',true);g.setRequestHeader('X-Master-Key',AK);
-  g.onload=function(){
-    if(g.status!==200)return;
-    try{
-      var d=JSON.parse(g.responseText);var record=d.record;
-      if(!record.saves)record.saves={};
-      record.saves[currentUser]=saveData;
-      var p=new XMLHttpRequest();
-      p.open('PUT',AU,true);p.setRequestHeader('X-Master-Key',AK);p.setRequestHeader('Content-Type','application/json');
-      p.onload=function(){if(p.status===200)addLog('☁️ 云端存档已同步','info');};
-      p.send(JSON.stringify(record));
-    }catch(e){}
-  };
-  g.send();
+  binWrite(function(record){
+    if(!record.saves)record.saves={};
+    record.saves[currentUser]=saveData;
+  });
+  addLog('☁️ 云端存档已同步','info');
 }
 
 function loadGame(){
@@ -751,7 +729,11 @@ function startGame(){
 }
 
 function doLogout(){
-  saveGame();
+  if(currentUser){
+    P.lastSave=Date.now();
+    try{localStorage.setItem('rpg_save_'+currentUser,JSON.stringify(buildSaveData()));}catch(e){}
+    saveToCloud();
+  }
   currentUser=null;nickname='';
   localStorage.removeItem('rpg_session');
   if(battleTimer){clearInterval(battleTimer);battleTimer=null;}
@@ -759,6 +741,7 @@ function doLogout(){
   document.getElementById('dUser').textContent='';
   document.getElementById('authMsg').textContent='';
   document.getElementById('authPass').value='';
+  addLog('已退出，存档已保存','info');
 }
 
 function toggleOverlayLB(){
@@ -1296,23 +1279,45 @@ setInterval(function(){
 
 fetchScores();
 
-function submitScore(){
-  if(!P.name||P.score<=0)return;
-  var g=new XMLHttpRequest();
-  g.open('GET',AU+'/latest',true);g.setRequestHeader('X-Master-Key',AK);
-  g.onload=function(){
-    if(g.status!==200)return;
+// Shared write lock for jsonbin to prevent concurrent overwrites
+var _binWriteBusy=false;
+var _binWriteQueue=[];
+function binWrite(modifier){
+  _binWriteQueue.push(modifier);
+  if(_binWriteBusy)return;
+  _binWriteBusy=true;
+  _processBinQueue();
+}
+function _processBinQueue(){
+  if(!_binWriteQueue.length){_binWriteBusy=false;return;}
+  var mod=_binWriteQueue.shift();
+  var x=new XMLHttpRequest();
+  x.open('GET',AU+'/latest',true);x.setRequestHeader('X-Master-Key',AK);
+  x.onload=function(){
+    if(x.status!==200){_processBinQueue();return;}
     try{
-      var d=JSON.parse(g.responseText);var scores=d.record;if(!scores.adv_players)scores.adv_players={};
-      var ex=scores.adv_players[P.name];var ib=!ex||P.score>(ex.best||0);
-      scores.adv_players[P.name]={best:ib?P.score:(ex.best||0),level:P.level,games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};
+      var d=JSON.parse(x.responseText);
+      mod(d.record);// let modifier change the record
       var p=new XMLHttpRequest();
       p.open('PUT',AU,true);p.setRequestHeader('X-Master-Key',AK);p.setRequestHeader('Content-Type','application/json');
-      p.onload=function(){if(p.status===200){renderLB(scores.adv_players);}};
-      p.send(JSON.stringify(scores));
-    }catch(e){}
+      p.onload=function(){_processBinQueue();};
+      p.onerror=function(){_processBinQueue();};
+      p.send(JSON.stringify(d.record));
+    }catch(e){_processBinQueue();}
   };
-  g.send();
+  x.onerror=function(){_processBinQueue();};
+  x.send();
+}
+
+function submitScore(){
+  if(!P.name||P.score<=0)return;
+  binWrite(function(record){
+    if(!record.adv_players)record.adv_players={};
+    var ex=record.adv_players[P.name];
+    var ib=!ex||P.score>(ex.best||0);
+    record.adv_players[P.name]={best:ib?P.score:(ex.best||0),level:P.level,games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};
+    renderLB(record.adv_players);
+  });
 }
 
 // Submit score periodically and on save
