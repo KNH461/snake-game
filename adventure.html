@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🗡️ 文字冒险</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#eee;display:flex;flex-direction:column;align-items:center;padding:12px;overflow-x:hidden}
+.back{align-self:flex-start;margin-bottom:8px}
+.back a{color:#1a1a2e;background:#0f0;padding:6px 16px;border-radius:6px;text-decoration:none;font-size:0.9rem;font-weight:bold;display:inline-block}
+.back a:hover{background:#0c0}
+.header{text-align:center;margin-bottom:10px}
+.header h1{font-size:1.6rem;text-shadow:0 0 10px #0f0}
+.score-bar{display:flex;gap:16px;margin-bottom:10px;font-size:0.9rem;justify-content:center;flex-wrap:wrap}
+.score-bar span{color:#0f0;font-weight:bold}
+.main-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center;width:100%;max-width:900px}
+.game-area{flex:1;min-width:280px;max-width:520px}
+.game-box{background:rgba(0,255,0,0.03);border:1px solid rgba(0,255,0,0.3);border-radius:10px;padding:16px;min-height:300px;display:flex;flex-direction:column}
+.scene-title{color:#0f0;font-size:1.1rem;font-weight:bold;margin-bottom:10px;text-align:center;text-shadow:0 0 6px rgba(0,255,0,0.3)}
+.scene-text{color:#ccc;font-size:0.95rem;line-height:1.7;margin-bottom:14px;flex:1;overflow-y:auto;max-height:260px}
+.scene-text .highlight{color:#ffd700;font-weight:bold}
+.scene-text .danger{color:#ff6b6b}
+.scene-text .heal{color:#0f0}
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice-btn{padding:12px 16px;font-size:0.95rem;border:1px solid rgba(0,255,0,0.4);background:rgba(0,255,0,0.06);color:#0f0;border-radius:8px;cursor:pointer;text-align:left;transition:all 0.2s;line-height:1.4}
+.choice-btn:hover{background:rgba(0,255,0,0.15);border-color:#0f0}
+.choice-btn:active{background:rgba(0,255,0,0.25)}
+.choice-btn:disabled{opacity:0.4;cursor:not-allowed;border-color:rgba(255,255,255,0.1);color:#666}
+.stats-bar{display:flex;gap:12px;margin-bottom:10px;font-size:0.85rem;justify-content:center;flex-wrap:wrap;background:rgba(0,255,0,0.05);border:1px solid rgba(0,255,0,0.15);border-radius:8px;padding:8px 12px}
+.stats-bar span{color:#0f0}
+.stats-bar .hp{color:#ff6b6b}
+.stats-bar .gold{color:#ffd700}
+.stats-bar .atk{color:#f80}
+.stats-bar .def{color:#0ff}
+.leaderboard{background:rgba(0,255,0,0.05);border:1px solid rgba(0,255,0,0.3);border-radius:8px;padding:14px;min-width:220px;max-width:280px}
+.leaderboard h3{font-size:1.1rem;margin-bottom:10px;color:#0f0;text-align:center}
+.lb-list{list-style:none;max-height:360px;overflow-y:auto}
+.lb-list li{display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.9rem}
+.lb-list li:first-child{color:#ffd700;font-weight:bold}
+.lb-list li:nth-child(2){color:#c0c0c0}
+.lb-list li:nth-child(3){color:#cd7f32}
+.lb-rank{width:28px;text-align:center}
+.lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px}
+.lb-score{font-weight:bold;color:#0f0;min-width:32px;text-align:right}
+.lb-status{text-align:center;font-size:0.75rem;color:#666;margin-top:8px}
+.lb-status.online{color:#0f0}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;overflow-y:auto;padding:20px 10px}
+.overlay h2{font-size:2rem;margin-bottom:12px}
+.overlay p{font-size:1rem;margin-bottom:16px;color:#aaa}
+.overlay input{padding:10px 16px;font-size:1.1rem;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:8px;outline:none;width:200px;text-align:center;margin-bottom:12px}
+.overlay input::placeholder{color:rgba(0,255,0,0.3)}
+.overlay button{padding:12px 36px;font-size:1.1rem;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:8px;cursor:pointer;margin:4px}
+.overlay .sub{font-size:0.85rem;color:#666;margin-top:8px}
+.overlay-lb{width:100%;max-width:340px;margin-top:16px}
+.overlay-lb h3{color:#0f0;font-size:1rem;margin-bottom:8px;text-align:center}
+.overlay-lb .lb-list{max-height:240px}
+.show-lb-btn{font-size:0.85rem!important;padding:8px 20px!important;border-color:rgba(0,255,0,0.4)!important;color:rgba(0,255,0,0.7)!important;margin-top:12px!important}
+#endScreen .end-info{font-size:1rem;color:#aaa;margin-bottom:8px;line-height:1.6}
+#endScreen .end-score{font-size:1.4rem;color:#0f0;margin-bottom:10px}
+@media(max-width:600px){
+  .main-wrap{flex-direction:column;align-items:center}
+  .game-area{min-width:auto;width:100%}
+  .leaderboard{width:100%;max-width:none}
+  .scene-text{max-height:200px}
+  .score-bar{font-size:0.8rem;gap:10px}
+}
+</style>
+</head>
+<body>
+<div class="back"><a href="index.html">← 返回游戏列表</a></div>
+<div class="header">
+  <h1>🗡️ 文字冒险</h1>
+  <div class="score-bar">
+    分数: <span id="score">0</span>
+    &nbsp;|&nbsp;
+    最高: <span id="best">0</span>
+  </div>
+</div>
+<div class="stats-bar" id="statsBar" style="display:none">
+  ❤️ <span class="hp" id="hp">100</span>
+  &nbsp;⚔️ <span class="atk" id="atk">10</span>
+  &nbsp;🛡️ <span class="def" id="def">5</span>
+  &nbsp;💰 <span class="gold" id="gold">0</span>
+</div>
+<div class="main-wrap">
+  <div class="game-area">
+    <div class="game-box" id="gameBox">
+      <div class="scene-title" id="sceneTitle"></div>
+      <div class="scene-text" id="sceneText"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+  </div>
+  <div class="leaderboard">
+    <h3>🏆 排行榜</h3>
+    <ul class="lb-list" id="lb"><li style="justify-content:center;color:#666">加载中...</li></ul>
+    <div class="lb-status" id="ls">等待连接...</div>
+  </div>
+</div>
+
+<div class="overlay" id="startScreen">
+  <h2>🗡️ 文字冒险</h2>
+  <p>输入你的冒险者名号</p>
+  <input type="text" id="ni" placeholder="你的昵称" maxlength="12" autocomplete="off">
+  <br><button onclick="startGame()">开始冒险</button>
+  <div class="sub">每次选择都会影响结局和分数</div>
+  <button class="show-lb-btn" onclick="toggleOverlayLB()">🏆 查看排行榜</button>
+  <div class="overlay-lb" id="overlayLB" style="display:none">
+    <ul class="lb-list" id="overlayLBList"><li style="justify-content:center;color:#666">加载中...</li></ul>
+  </div>
+</div>
+
+<div class="overlay" id="endScreen" style="display:none">
+  <h2 id="endTitle">📜 冒险结束</h2>
+  <div class="end-info" id="endInfo"></div>
+  <div class="end-score" id="endScore"></div>
+  <button onclick="startGame()">再次冒险</button>
+</div>
+
+<script>
+// ============ API ============
+var AK='***';
+var BI='6a1b0748ddf5aa59f778bc7a';
+var AU='https://api.jsonbin.io/v3/b/'+BI;
+var RI=30000;
+var nk=localStorage.getItem('adv_nk')||'';
+var bestScore=parseInt(localStorage.getItem('adv_best')||'0');
+var ni=document.getElementById('ni');
+if(nk)ni.value=nk;
+document.getElementById('best').textContent=bestScore;
+
+// ============ GAME STATE ============
+var state={};
+function resetState(){
+  state={hp:100,maxHp:100,atk:10,def:5,gold:0,score:0,items:[],flags:{},scene:'start'};
+}
+
+// ============ STORY DATA ============
+var STORY={
+start:{
+  title:'🏰 王国边境',
+  text:'你是一名流浪冒险者，来到了被黑暗笼罩的边境小镇。镇长告诉你：<span class="highlight">「北方的魔王城堡里藏着一颗能净化一切黑暗的圣石，但无数勇者有去无回。」</span>\n\n你握紧了手中的剑，决定出发。',
+  choices:[
+    {text:'⚔️ 直接前往魔王城堡',next:'castle_gate'},
+    {text:'🏪 先去镇上商店看看',next:'shop'},
+    {text:'🌲 走小路探索森林',next:'forest_1'}
+  ]
+},
+shop:{
+  title:'🏪 边境商店',
+  text:'店主是个笑容可掬的矮人。<span class="highlight">「冒险者！来看看我的宝贝吧。」</span>',
+  choices:[
+    {text:'🗡️ 铁剑（攻击+5）— 30金',next:'shop_done',action:function(){if(state.gold>=30){state.gold-=30;state.atk+=5;state.score+=10;return'你买下了铁剑，感觉力量大增！'}return'<span class="danger">金币不够！</span>'},req:function(){return state.gold>=30}},
+    {text:'🛡️ 铁盾（防御+5）— 30金',next:'shop_done',action:function(){if(state.gold>=30){state.gold-=30;state.def+=5;state.score+=10;return'你买下了铁盾，安全感倍增！'}return'<span class="danger">金币不够！</span>'},req:function(){return state.gold>=30}},
+    {text:'🧪 生命药水（回复50HP）— 20金',next:'shop_done',action:function(){if(state.gold>=20){state.gold-=20;state.hp=Math.min(state.maxHp,state.hp+50);state.score+=5;return'<span class="heal">你喝下药水，恢复了50点生命！</span>'}return'<span class="danger">金币不够！</span>'},req:function(){return state.gold>=20}},
+    {text:'👋 离开商店',next:'start'}
+  ]
+},
+shop_done:{
+  title:'🏪 边境商店',
+  text:'交易完成！店主笑着说：<span class="highlight">「祝你好运，冒险者！」</span>',
+  choices:[
+    {text:'继续看看',next:'shop'},
+    {text:'出发冒险',next:'start'}
+  ]
+},
+forest_1:{
+  title:'🌲 幽暗森林',
+  text:'你走入茂密的森林，空气中弥漫着潮湿的气息。突然，前方传来争吵声——一个哥布林正在抢劫一位老人！',
+  choices:[
+    {text:'⚔️ 冲上去救老人',next:'forest_fight',action:function(){state.flags.savedOldMan=true;return''}},
+    {text:'🤫 悄悄绕过去',next:'forest_deep'},
+    {text:'🔙 返回小镇',next:'start'}
+  ]
+},
+forest_fight:{
+  title:'⚔️ 森林遭遇战',
+  text:'你拔剑冲向哥布林！',
+  combat:{enemy:'哥布林',enemyHp:30,enemyAtk:8,reward:{gold:15,score:20},next:'forest_after_fight'}
+},
+forest_after_fight:{
+  title:'🎉 胜利！',
+  text:'你击败了哥布林！老人感激地递给你一些金币。\n老人：<span class="highlight">「谢谢你，年轻人。我告诉你一个秘密——森林深处有一棵<span class="highlight">古树</span>，它的树洞里藏着宝物。」</span>',
+  choices:[
+    {text:'🌲 去森林深处找古树',next:'ancient_tree'},
+    {text:'🔙 返回小镇',next:'start'}
+  ]
+},
+forest_deep:{
+  title:'🌲 森林深处',
+  text:'你小心翼翼地穿过灌木丛，发现了一个闪闪发光的东西——是一个宝箱！但旁边有一条蛇在守护。',
+  choices:[
+    {text:'⚔️ 与蛇战斗夺取宝箱',next:'snake_fight'},
+    {text:'🤫 悄悄溜走',next:'forest_clearing'}
+  ]
+},
+snake_fight:{
+  title:'⚔️ 蛇之战',
+  text:'你与巨蛇展开搏斗！',
+  combat:{enemy:'巨蛇',enemyHp:25,enemyAtk:12,reward:{gold:20,score:25},next:'snake_win'}
+},
+snake_win:{
+  title:'🎁 宝箱',
+  text:'你击败了巨蛇，打开了宝箱。里面有一颗<span class="highlight">发光的宝石</span>和一些金币！',
+  onEnter:function(){state.items.push('宝石');state.gold+=20;state.score+=15;},
+  choices:[
+    {text:'🌲 继续深入森林',next:'ancient_tree'},
+    {text:'🔙 返回小镇',next:'start'}
+  ]
+},
+ancient_tree:{
+  title:'🌳 古树',
+  text:'你找到了那棵参天古树。粗壮的树干上有一个树洞，里面隐约发出微光。',
+  choices:[
+    {text:'🕳️ 把手伸进树洞',next:'tree_hole'},
+    {text:'🔙 返回',next:'forest_clearing'}
+  ]
+},
+tree_hole:{
+  title:'✨ 古树的馈赠',
+  text:'你的手触到了一个冰凉的物体——是一把<span class="highlight">古老的魔法匕首</span>！它散发着微弱的光芒，似乎蕴含着某种力量。',
+  onEnter:function(){state.items.push('魔法匕首');state.atk+=8;state.score+=30;},
+  choices:[
+    {text:'⚔️ 前往魔王城堡',next:'castle_gate'},
+    {text:'🔙 返回小镇准备一下',next:'start'}
+  ]
+},
+forest_clearing:{
+  title:'🌿 林间空地',
+  text:'你来到一片开阔的空地，阳光从树冠间洒落。远处能看到魔王城堡的轮廓。',
+  choices:[
+    {text:'⚔️ 前往魔王城堡',next:'castle_gate'},
+    {text:'🌲 继续探索森林',next:'forest_deep'},
+    {text:'🔙 返回小镇',next:'start'}
+  ]
+},
+castle_gate:{
+  title:'🏰 魔王城堡大门',
+  text:'巨大的黑色城堡矗立在你面前，铁门半开着，仿佛在邀请你进入。门口站着一个骷髅守卫。',
+  choices:[
+    {text:'⚔️ 正面挑战骷髅守卫',next:'skeleton_fight'},
+    {text:'🕳️ 从侧面的破墙潜入',next:'castle_sneak'},
+    function(){return state.items.indexOf('魔法匕首')>=0?{text:'🗡️ 用魔法匕首发出光芒驱散骷髅',next:'castle_magic',action:function(){state.score+=20;return''}}:null}
+  ].filter(function(c){return c!==null})
+},
+skeleton_fight:{
+  title:'💀 骷髅守卫',
+  text:'骷髅守卫举起生锈的剑向你扑来！',
+  combat:{enemy:'骷髅守卫',enemyHp:45,enemyAtk:14,reward:{gold:25,score:30},next:'castle_hall'}
+},
+castle_sneak:{
+  title:'🕳️ 潜入城堡',
+  text:'你从侧面的破墙钻了进去，成功避开了守卫！但你不小心踩到了什么东西——<span class="danger">是一具冒险者的遗骸...</span>旁边有一把剑和一些金币。',
+  onEnter:function(){state.gold+=15;state.score+=10;},
+  choices:[
+    {text:'⚔️ 拿起剑继续前进',next:'castle_hall',action:function(){state.atk+=3;return'你拿起了遗骸旁的剑。'}},
+    {text:'🕯️ 为他祈祷后继续',next:'castle_hall',action:function(){state.score+=5;return'你默默祈祷。也许这就是冒险者的宿命...'}}
+  ]
+},
+castle_magic:{
+  title:'✨ 魔法匕首的光芒',
+  text:'魔法匕首发出耀眼的光芒，骷髅守卫发出痛苦的嘶吼，化为灰烬消散了。大门完全敞开了。',
+  choices:[
+    {text:'🏰 进入城堡',next:'castle_hall'}
+  ]
+},
+castle_hall:{
+  title:'🏰 城堡大厅',
+  text:'大厅里阴暗潮湿，墙壁上的火把忽明忽暗。前方有两条路：左边传来奇怪的声响，右边是一条安静的走廊。',
+  choices:[
+    {text:'👈 走左边（有声响）',next:'castle_dungeon'},
+    {text:'👉 走右边（安静）',next:'castle_library'},
+    {text:'⬆️ 直接上楼',next:'castle_stairs'}
+  ]
+},
+castle_dungeon:{
+  title:'⛓️ 地牢',
+  text:'你走进地牢，发现一个被囚禁的精灵！她说：<span class="highlight">「求你救救我！我知道魔王的弱点——他怕火！」</span>',
+  choices:[
+    {text:'🔓 打开牢门救她',next:'castle_free_elf',action:function(){state.flags.freedElf=true;state.score+=25;return''}},
+    {text:'❌ 不管她，继续前进',next:'castle_stairs'}
+  ]
+},
+castle_free_elf:{
+  title:'🧝 精灵的礼物',
+  text:'精灵感激地说：<span class="highlight">「谢谢你！这个给你。」</span>她递给你一个<span class="highlight">火之护符</span>。\n<span class="highlight">「用它可以释放火焰之力，对魔王特别有效！」</span>',
+  onEnter:function(){state.items.push('火之护符');state.score+=15;},
+  choices:[
+    {text:'⬆️ 上楼找魔王',next:'castle_stairs'}
+  ]
+},
+castle_library:{
+  title:'📚 图书馆',
+  text:'满是灰尘的书架间，你发现了一本发着微光的古书。翻开一看，记载着<span class="highlight">「生命之泉」</span>的配方。',
+  onEnter:function(){state.hp=Math.min(state.maxHp,state.hp+40);state.score+=15;},
+  choices:[
+    {text:'📖 仔细研读（恢复40HP）',next:'castle_stairs',action:function(){return'<span class="heal">你按照古书的配方调配了药剂，感觉精神焕发！</span>'}},
+    {text:'⬆️ 带着书上楼',next:'castle_stairs',action:function(){state.items.push('古书');return'你把古书收好。'}}
+  ]
+},
+castle_stairs:{
+  title:'⬆️ 通往魔王之间',
+  text:'你走上旋转楼梯，心跳加速。最顶层的大门紧闭着，门上刻着古老的符文。',
+  choices:[
+    {text:'🚪 推开大门',next:'boss_fight'},
+    {text:'🔙 回去再准备一下',next:'castle_hall'}
+  ]
+},
+boss_fight:{
+  title:'👹 魔王',
+  text:'大门轰然打开，一个巨大的身影坐在王座上。<span class="danger">「又一个送死的勇者。」</span>魔王缓缓站起，黑暗之力在他周身涌动。',
+  combat:{enemy:'魔王',enemyHp:80,enemyAtk:20,reward:{gold:50,score:100},next:'boss_win'}
+},
+boss_win:{
+  title:'👑 击败魔王！',
+  text:'魔王发出不甘的怒吼，化为黑烟消散了。在他身后的祭台上，你看到了那颗<span class="highlight">圣石</span>——散发着温暖而纯净的光芒。',
+  choices:[
+    {text:'✨ 拿起圣石',next:'ending_good'}
+  ]
+},
+ending_good:{
+  title:'🌟 光明归来',
+  text:'当你触碰到圣石的瞬间，一股温暖的力量涌遍全身。城堡开始崩塌，你带着圣石冲出了城堡。\n\n回到小镇时，黑暗已经散去，阳光重新照耀大地。人们欢呼着迎接你——<span class="highlight">你成为了传说中的英雄！</span>',
+  ending:true,
+  endingType:'hero',
+  endingName:'传说勇者',
+  onEnter:function(){state.score+=50;}
+},
+ending_dead:{
+  title:'💀 倒在路上',
+  text:'你的身体终于承受不住了...黑暗吞噬了你。\n\n也许下一个冒险者能完成你未竟的使命...',
+  ending:true,
+  endingType:'dead',
+  endingName:'壮烈牺牲',
+  onEnter:function(){state.score=Math.floor(state.score*0.3);}
+},
+ending_retreat:{
+  title:'🚪 放弃冒险',
+  text:'你转身离开了城堡。也许你还没有准备好面对这一切。\n\n回到小镇后，你过上了平静的生活，但心中始终有一个遗憾...',
+  ending:true,
+  endingType:'retreat',
+  endingName:'隐退之人',
+  onEnter:function(){state.score=Math.floor(state.score*0.5);}
+}
+};
+
+// ============ COMBAT SYSTEM ============
+function doCombat(scene){
+  var c=STORY[scene].combat;
+  var eHp=c.enemyHp,eAtk=c.enemyAtk;
+  var log='<span class="danger">⚔️ 战斗开始！'+c.enemy+' HP:'+eHp+'</span>\n\n';
+  var rounds=0;
+  while(state.hp>0&&eHp>0&&rounds<20){
+    rounds++;
+    var myDmg=Math.max(1,state.atk+Math.floor(Math.random()*6)-3);
+    eHp-=myDmg;
+    log+='第'+rounds+'回合：你造成了 <span class="highlight">'+myDmg+'</span> 点伤害';
+    if(eHp<=0){log+='，'+c.enemy+'被击败了！\n';break;}
+    var eDmg=Math.max(1,eAtk+Math.floor(Math.random()*6)-3-state.def);
+    state.hp-=eDmg;
+    log+='，'+c.enemy+'造成了 <span class="danger">'+eDmg+'</span> 点伤害（你HP:'+Math.max(0,state.hp)+'）\n';
+  }
+  if(state.hp<=0){
+    log+='\n<span class="danger">你被'+c.enemy+'击败了...</span>';
+    return{log:log,next:'ending_dead',won:false};
+  }
+  state.gold+=c.reward.gold;
+  state.score+=c.reward.score;
+  log+='\n<span class="heal">🎉 胜利！获得 '+c.reward.gold+' 金币，+'+c.reward.score+' 分</span>';
+  updateStats();
+  return{log:log,next:c.next,won:true};
+}
+
+// ============ RENDER ============
+function renderScene(sceneId){
+  if(!STORY[sceneId]){sceneId='start';}
+  var scene=STORY[sceneId];
+  state.scene=sceneId;
+  if(scene.onEnter)scene.onEnter();
+  updateStats();
+
+  document.getElementById('sceneTitle').textContent=scene.title;
+  var text=scene.text;
+
+  if(scene.combat){
+    var result=doCombat(sceneId);
+    document.getElementById('sceneText').innerHTML=result.log.replace(/\n/g,'<br>');
+    var div=document.getElementById('choices');
+    div.innerHTML='';
+    var btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.textContent=result.won?'继续前进':'重新开始';
+    btn.onclick=function(){
+      if(result.won)renderScene(result.next);
+      else startGame();
+    };
+    div.appendChild(btn);
+    return;
+  }
+
+  if(scene.ending){
+    document.getElementById('sceneText').innerHTML=text.replace(/\n/g,'<br>');
+    showEnding(scene);
+    return;
+  }
+
+  document.getElementById('sceneText').innerHTML=text.replace(/\n/g,'<br>');
+  var div=document.getElementById('choices');
+  div.innerHTML='';
+  scene.choices.forEach(function(ch){
+    if(ch.req&&!ch.req())return;
+    var btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.textContent=ch.text;
+    btn.onclick=function(){
+      var extra='';
+      if(ch.action)extra=ch.action();
+      if(extra&&extra.length>0){
+        document.getElementById('sceneText').innerHTML+=('<br><br>'+extra);
+      }
+      renderScene(ch.next);
+    };
+    div.appendChild(btn);
+  });
+}
+
+function updateStats(){
+  document.getElementById('score').textContent=state.score;
+  document.getElementById('hp').textContent=Math.max(0,state.hp);
+  document.getElementById('atk').textContent=state.atk;
+  document.getElementById('def').textContent=state.def;
+  document.getElementById('gold').textContent=state.gold;
+  document.getElementById('statsBar').style.display='flex';
+}
+
+function showEnding(scene){
+  document.getElementById('endScreen').style.display='flex';
+  document.getElementById('endTitle').textContent='📜 '+scene.endingName;
+  document.getElementById('endInfo').innerHTML='结局: <span class="highlight">'+scene.endingName+'</span><br>剩余HP: '+Math.max(0,state.hp)+'<br>收集物品: '+(state.items.length?state.items.join('、'):'无');
+  document.getElementById('endScore').textContent='最终得分: '+state.score;
+  if(state.score>bestScore){bestScore=state.score;localStorage.setItem('adv_best',bestScore);}
+  document.getElementById('best').textContent=bestScore;
+  if(nk&&state.score>0)submitScore(nk,state.score);
+}
+
+// ============ GAME CONTROL ============
+function startGame(){
+  nk=ni.value.trim()||'匿名玩家';
+  localStorage.setItem('adv_nk',nk);
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('endScreen').style.display='none';
+  resetState();
+  renderScene('start');
+}
+
+function toggleOverlayLB(){
+  var lb=document.getElementById('overlayLB');
+  if(lb.style.display==='none'){
+    lb.style.display='block';
+    document.getElementById('overlayLBList').innerHTML=document.getElementById('lb').innerHTML;
+  }else{lb.style.display='none';}
+}
+
+// ============ LEADERBOARD ============
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function lbOK(){document.getElementById('ls').textContent='✅ 已同步 · '+new Date().toLocaleTimeString();document.getElementById('ls').className='lb-status online';}
+function lbErr(m){document.getElementById('ls').textContent='⚠️ '+(m||'同步失败');document.getElementById('ls').className='lb-status';}
+
+function renderLB(p){
+  var s=[];for(var n in p)s.push({name:n,score:p[n].best||0});
+  s.sort(function(a,b){return b.score-a.score;});s=s.slice(0,20);
+  var l=document.getElementById('lb');
+  if(!s.length){l.innerHTML='<li style="justify-content:center;color:#666">还没有记录，来一局吧！</li>';return;}
+  var h='';var medals=['🥇','🥈','🥉'];
+  for(var i=0;i<s.length;i++){
+    var r=i<3?medals[i]:''+(i+1);
+    var hl=s[i].name===nk?' style="background:rgba(0,255,0,0.08)"':'';
+    h+='<li'+hl+'><span class="lb-rank">'+r+'</span><span class="lb-name">'+esc(s[i].name)+'</span><span class="lb-score">'+s[i].score+'</span></li>';
+  }
+  l.innerHTML=h;
+  if(document.getElementById('overlayLB').style.display!=='none'){
+    document.getElementById('overlayLBList').innerHTML=h;
+  }
+}
+
+function fetchScores(){
+  var x=new XMLHttpRequest();
+  x.open('GET',AU+'/latest',true);
+  x.setRequestHeader('X-Master-Key',AK);
+  x.onload=function(){
+    if(x.status===200){
+      try{var d=JSON.parse(x.responseText);renderLB(d.record.adv_players||{});lbOK();}catch(e){lbErr('数据解析失败');}
+    }else lbErr('HTTP '+x.status);
+  };
+  x.onerror=function(){lbErr('网络错误');};
+  x.send();
+}
+
+function submitScore(name,ns){
+  document.getElementById('ls').textContent='⏳ 提交中...';
+  var g=new XMLHttpRequest();
+  g.open('GET',AU+'/latest',true);
+  g.setRequestHeader('X-Master-Key',AK);
+  g.onload=function(){
+    if(g.status!==200){lbErr('HTTP '+g.status);return;}
+    try{
+      var d=JSON.parse(g.responseText);var scores=d.record;if(!scores.adv_players)scores.adv_players={};
+      var ex=scores.adv_players[name];var ib=!ex||ns>(ex.best||0);
+      scores.adv_players[name]={best:ib?ns:(ex.best||0),games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};
+      var p=new XMLHttpRequest();
+      p.open('PUT',AU,true);
+      p.setRequestHeader('X-Master-Key',AK);
+      p.setRequestHeader('Content-Type','application/json');
+      p.onload=function(){if(p.status===200){renderLB(scores.adv_players);lbOK();}else lbErr('提交失败 '+p.status);};
+      p.onerror=function(){lbErr('提交网络错误');};
+      p.send(JSON.stringify(scores));
+    }catch(e){lbErr('提交异常');}
+  };
+  g.onerror=function(){lbErr('网络错误');};
+  g.send();
+}
+
+fetchScores();setInterval(fetchScores,RI);
+</script>
+</body>
+</html>
