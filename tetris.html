@@ -38,13 +38,7 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
 .ctrl-btn.drop-btn:active{background:rgba(255,200,0,0.3)}
 .ctrl-btn.rotate-btn{background:rgba(0,200,255,0.12);border-color:rgba(0,200,255,0.5);color:#0ff}
 .ctrl-btn.rotate-btn:active{background:rgba(0,200,255,0.3)}
-.dpad{display:grid;grid-template-columns:60px 60px 60px;grid-template-rows:60px 60px 60px;gap:6px;justify-content:center}
-.dpad .ctrl-btn{width:60px;height:60px}
-.dpad-up{grid-column:2;grid-row:1}
-.dpad-left{grid-column:1;grid-row:2}
-.dpad-rotate{grid-column:2;grid-row:2}
-.dpad-right{grid-column:3;grid-row:2}
-.dpad-down{grid-column:2;grid-row:3}
+
 .ctrl-side{display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;overflow-y:auto;padding:20px 10px}
 .overlay h2{font-size:2rem;margin-bottom:12px}
@@ -64,8 +58,7 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
   .game-col{width:100%;align-items:center}
   canvas{width:min(90vw, 300px)!important;height:auto!important}
   .leaderboard{width:90vw;max-width:none}
-  .dpad{grid-template-columns:54px 54px 54px;grid-template-rows:54px 54px 54px;gap:4px}
-  .dpad .ctrl-btn{width:54px;height:54px;font-size:1.4rem}
+
   .ctrl-btn{width:54px;height:54px}
   .ctrl-btn.drop-btn{height:48px;font-size:1rem}
   .score-bar{font-size:0.8rem;gap:10px}
@@ -82,12 +75,10 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
   <div class="game-col">
     <canvas id="cv" width="250" height="500"></canvas>
     <div class="tc" id="tc">
-      <div class="dpad">
-        <div class="ctrl-btn dpad-up" id="bU">⬆️</div>
-        <div class="ctrl-btn dpad-left" id="bL">⬅️</div>
-        <div class="ctrl-btn dpad-rotate rotate-btn" id="bR">🔄</div>
-        <div class="ctrl-btn dpad-right" id="bRR">➡️</div>
-        <div class="ctrl-btn dpad-down" id="bD">⬇️</div>
+      <div class="ctrl-row">
+        <div class="ctrl-btn" id="bL">⬅️</div>
+        <div class="ctrl-btn rotate-btn" id="bR">🔄</div>
+        <div class="ctrl-btn" id="bRR">➡️</div>
       </div>
       <div class="ctrl-side">
         <div class="ctrl-btn drop-btn" id="bDD">⏬ 直落</div>
@@ -317,8 +308,6 @@ document.addEventListener('keydown',function(e){
 // Touch controls - D-pad layout
 document.getElementById('bL').addEventListener('click',function(e){mv(-1,0);draw();e.preventDefault();});
 document.getElementById('bRR').addEventListener('click',function(e){mv(1,0);draw();e.preventDefault();});
-document.getElementById('bD').addEventListener('click',function(e){mv(0,1);sc+=1;updUI();draw();e.preventDefault();});
-document.getElementById('bU').addEventListener('click',function(e){mv(0,-1);draw();e.preventDefault();});
 document.getElementById('bR').addEventListener('click',function(e){rotPc();e.preventDefault();});
 document.getElementById('bDD').addEventListener('click',function(e){drop();draw();e.preventDefault();});
 
