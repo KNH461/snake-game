@@ -518,19 +518,54 @@ function sellPrice(it){
 }
 
 // ============================================================
-//  GAME SAVE / LOAD
+//  GAME SAVE / LOAD (Local + Cloud)
 // ============================================================
+
+function buildSaveData(){
+  return {
+    name:P.name,level:P.level,xp:P.xp,gold:P.gold,score:P.score,
+    hp:P.hp,maxHp:P.maxHp,baseAtk:P.baseAtk,baseDef:P.baseDef,
+    equipment:P.equipment,inventory:P.inventory,
+    pets:P.pets,activePet:P.activePet,
+    materials:P.materials,currentMap:P.currentMap,
+    lastSave:Date.now()
+  };
+}
 
 function saveGame(){
   P.lastSave=Date.now();
-  try{localStorage.setItem('rpg_save',JSON.stringify(P));addLog('💾 游戏已保存','info');}catch(e){addLog('⚠️ 保存失败','info');}
+  // Save locally (instant)
+  try{localStorage.setItem('rpg_save_'+P.name,JSON.stringify(buildSaveData()));}catch(e){}
+  // Save to cloud (async)
+  saveToCloud();
 }
+
+function saveToCloud(){
+  if(!P.name)return;
+  var saveData=buildSaveData();
+  var g=new XMLHttpRequest();
+  g.open('GET',AU+'/latest',true);g.setRequestHeader('X-Master-Key',AK);
+  g.onload=function(){
+    if(g.status!==200)return;
+    try{
+      var d=JSON.parse(g.responseText);var record=d.record;
+      if(!record.saves)record.saves={};
+      record.saves[P.name]=saveData;
+      var p=new XMLHttpRequest();
+      p.open('PUT',AU,true);p.setRequestHeader('X-Master-Key',AK);p.setRequestHeader('Content-Type','application/json');
+      p.onload=function(){if(p.status===200)addLog('☁️ 云端存档已同步','info');};
+      p.send(JSON.stringify(record));
+    }catch(e){}
+  };
+  g.send();
+}
+
 function loadGame(){
+  // Try local first (instant)
   try{
-    var d=localStorage.getItem('rpg_save');
+    var d=localStorage.getItem('rpg_save_'+nickname);
     if(d){
       var saved=JSON.parse(d);
-      // Merge with defaults for any missing fields
       var def=defaultPlayer();
       for(var k in def){if(saved[k]===undefined)saved[k]=def[k];}
       P=saved;
@@ -538,6 +573,33 @@ function loadGame(){
     }
   }catch(e){}
   return false;
+}
+
+function loadFromCloud(cb){
+  if(!nickname){if(cb)cb(false);return;}
+  var x=new XMLHttpRequest();
+  x.open('GET',AU+'/latest',true);x.setRequestHeader('X-Master-Key',AK);
+  x.onload=function(){
+    if(x.status!==200){if(cb)cb(false);return;}
+    try{
+      var d=JSON.parse(x.responseText);
+      var saves=(d.record&&d.record.saves)||{};
+      var saved=saves[nickname];
+      if(saved&&saved.level){
+        var def=defaultPlayer();
+        for(var k in def){if(saved[k]===undefined)saved[k]=def[k];}
+        P=saved;
+        // Also save locally
+        try{localStorage.setItem('rpg_save_'+nickname,JSON.stringify(buildSaveData()));}catch(e){}
+        addLog('☁️ 已从云端恢复存档！','info');
+        if(cb)cb(true);
+      }else{
+        if(cb)cb(false);
+      }
+    }catch(e){if(cb)cb(false);}
+  };
+  x.onerror=function(){if(cb)cb(false);};
+  x.send();
 }
 
 // ============================================================
@@ -548,15 +610,42 @@ var nickname='';
 function startGame(){
   nickname=document.getElementById('ni').value.trim()||'匿名玩家';
   document.getElementById('startScreen').style.display='none';
-  if(!loadGame()){
-    P=defaultPlayer();
-    P.name=nickname;
-  }
+  P=defaultPlayer();
+  P.name=nickname;
   P.maxHp=baseHp(P.level);
-  if(P.hp<=0)P.hp=P.maxHp;
+  P.hp=P.maxHp;
   updateTopBar();renderEquipGrid();renderInv();renderPets();
-  renderMaps();renderChests();
-  addLog('🗡️ 欢迎回来，'+nickname+'！','info');
+  renderMaps();renderChests();renderEnhancePanel();
+
+  // Try local save first
+  if(loadGame()){
+    P.maxHp=baseHp(P.level);
+    if(P.hp<=0)P.hp=P.maxHp;
+    updateTopBar();renderEquipGrid();renderInv();renderPets();
+    renderMaps();renderChests();renderEnhancePanel();
+    addLog('💾 已恢复本地存档','info');
+    // Also try cloud in background for newer data
+    loadFromCloud(function(ok){
+      if(ok){
+        P.maxHp=baseHp(P.level);
+        if(P.hp<=0)P.hp=P.maxHp;
+        updateTopBar();renderEquipGrid();renderInv();renderPets();
+        renderMaps();renderChests();renderEnhancePanel();
+      }
+    });
+  }else{
+    // No local save, try cloud
+    addLog('🔍 正在从云端加载存档...','info');
+    loadFromCloud(function(ok){
+      if(!ok){
+        addLog('🗡️ 欢迎新冒险者，'+nickname+'！','info');
+      }
+      P.maxHp=baseHp(P.level);
+      if(P.hp<=0)P.hp=P.maxHp;
+      updateTopBar();renderEquipGrid();renderInv();renderPets();
+      renderMaps();renderChests();renderEnhancePanel();
+    });
+  }
 }
 
 function toggleOverlayLB(){
