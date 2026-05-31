@@ -2,49 +2,134 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🗡️ 文字冒险</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🗡️ 文字冒险 RPG</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#1a1a2e;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#eee;display:flex;flex-direction:column;align-items:center;padding:12px;overflow-x:hidden}
-.back{align-self:flex-start;margin-bottom:8px}
-.back a{color:#1a1a2e;background:#0f0;padding:6px 16px;border-radius:6px;text-decoration:none;font-size:0.9rem;font-weight:bold;display:inline-block}
-.back a:hover{background:#0c0}
-.header{text-align:center;margin-bottom:10px}
-.header h1{font-size:1.6rem;text-shadow:0 0 10px #0f0}
-.score-bar{display:flex;gap:16px;margin-bottom:10px;font-size:0.9rem;justify-content:center;flex-wrap:wrap}
-.score-bar span{color:#0f0;font-weight:bold}
-.main-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center;width:100%;max-width:900px}
-.game-area{flex:1;min-width:280px;max-width:520px}
-.game-box{background:rgba(0,255,0,0.03);border:1px solid rgba(0,255,0,0.3);border-radius:10px;padding:16px;min-height:300px;display:flex;flex-direction:column}
-.scene-title{color:#0f0;font-size:1.1rem;font-weight:bold;margin-bottom:10px;text-align:center;text-shadow:0 0 6px rgba(0,255,0,0.3)}
-.scene-text{color:#ccc;font-size:0.95rem;line-height:1.7;margin-bottom:14px;flex:1;overflow-y:auto;max-height:260px}
-.scene-text .highlight{color:#ffd700;font-weight:bold}
-.scene-text .danger{color:#ff6b6b}
-.scene-text .heal{color:#0f0}
-.choices{display:flex;flex-direction:column;gap:8px}
-.choice-btn{padding:12px 16px;font-size:0.95rem;border:1px solid rgba(0,255,0,0.4);background:rgba(0,255,0,0.06);color:#0f0;border-radius:8px;cursor:pointer;text-align:left;transition:all 0.2s;line-height:1.4}
-.choice-btn:hover{background:rgba(0,255,0,0.15);border-color:#0f0}
-.choice-btn:active{background:rgba(0,255,0,0.25)}
-.choice-btn:disabled{opacity:0.4;cursor:not-allowed;border-color:rgba(255,255,255,0.1);color:#666}
-.stats-bar{display:flex;gap:12px;margin-bottom:10px;font-size:0.85rem;justify-content:center;flex-wrap:wrap;background:rgba(0,255,0,0.05);border:1px solid rgba(0,255,0,0.15);border-radius:8px;padding:8px 12px}
-.stats-bar span{color:#0f0}
-.stats-bar .hp{color:#ff6b6b}
-.stats-bar .gold{color:#ffd700}
-.stats-bar .atk{color:#f80}
-.stats-bar .def{color:#0ff}
-.leaderboard{background:rgba(0,255,0,0.05);border:1px solid rgba(0,255,0,0.3);border-radius:8px;padding:14px;min-width:220px;max-width:280px}
-.leaderboard h3{font-size:1.1rem;margin-bottom:10px;color:#0f0;text-align:center}
-.lb-list{list-style:none;max-height:360px;overflow-y:auto}
-.lb-list li{display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.9rem}
-.lb-list li:first-child{color:#ffd700;font-weight:bold}
-.lb-list li:nth-child(2){color:#c0c0c0}
-.lb-list li:nth-child(3){color:#cd7f32}
-.lb-rank{width:28px;text-align:center}
-.lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px}
-.lb-score{font-weight:bold;color:#0f0;min-width:32px;text-align:right}
-.lb-status{text-align:center;font-size:0.75rem;color:#666;margin-top:8px}
-.lb-status.online{color:#0f0}
+body{background:#1a1a2e;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#eee;overflow-x:hidden;padding:0}
+a{color:#0f0;text-decoration:none}
+
+/* Top bar */
+.top-bar{background:rgba(0,255,0,0.05);border-bottom:1px solid rgba(0,255,0,0.2);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:5}
+.top-bar .back-link{background:#0f0;color:#1a1a2e;padding:4px 12px;border-radius:4px;font-size:0.85rem;font-weight:bold}
+.top-bar .player-info{display:flex;gap:12px;font-size:0.85rem;flex-wrap:wrap;align-items:center}
+.top-bar .player-info span{white-space:nowrap}
+.top-bar .lv{color:#ffd700;font-weight:bold}
+.top-bar .hp-bar{display:flex;align-items:center;gap:4px}
+.top-bar .hp-bar .bar-bg{width:80px;height:10px;background:#333;border-radius:5px;overflow:hidden}
+.top-bar .hp-bar .bar-fill{height:100%;background:#ff6b6b;border-radius:5px;transition:width 0.3s}
+.top-bar .hp-val{color:#ff6b6b;font-size:0.8rem}
+.top-bar .gold{color:#ffd700}
+.top-bar .xp-bar{display:flex;align-items:center;gap:4px}
+.top-bar .xp-bar .bar-bg{width:60px;height:8px;background:#333;border-radius:4px;overflow:hidden}
+.top-bar .xp-bar .bar-fill{height:100%;background:#0f0;border-radius:4px;transition:width 0.3s}
+.top-bar .xp-val{color:#0f0;font-size:0.75rem}
+
+/* Main layout */
+.main{display:flex;height:calc(100vh - 48px);overflow:hidden}
+.panel{display:flex;flex-direction:column;overflow:hidden}
+.panel-left{width:260px;border-right:1px solid rgba(0,255,0,0.15);overflow-y:auto;padding:10px}
+.panel-center{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.panel-right{width:260px;border-left:1px solid rgba(0,255,0,0.15);overflow-y:auto;padding:10px}
+
+/* Tab bar for mobile */
+.tab-bar{display:none;background:rgba(0,255,0,0.05);border-top:1px solid rgba(0,255,0,0.2);position:fixed;bottom:0;left:0;right:0;z-index:5}
+.tab-bar button{flex:1;padding:8px 4px;font-size:0.75rem;background:none;border:none;color:#888;cursor:pointer;border-top:2px solid transparent}
+.tab-bar button.active{color:#0f0;border-top-color:#0f0}
+
+/* Section titles */
+.section-title{color:#0f0;font-size:0.95rem;font-weight:bold;margin:8px 0 6px;padding-bottom:4px;border-bottom:1px solid rgba(0,255,0,0.15)}
+
+/* Equipment panel */
+.equip-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.equip-slot{background:rgba(0,255,0,0.04);border:1px solid rgba(0,255,0,0.2);border-radius:6px;padding:6px 8px;font-size:0.75rem;cursor:pointer;transition:all 0.15s;position:relative}
+.equip-slot:hover{border-color:#0f0}
+.equip-slot .slot-name{color:#888;font-size:0.65rem;display:block;margin-bottom:2px}
+.equip-slot .slot-item{color:#ccc;font-size:0.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.equip-slot.empty .slot-item{color:#555;font-style:italic}
+.equip-slot.has-item{border-color:rgba(255,255,255,0.15)}
+
+/* Quality colors */
+.q-common{color:#ccc!important}
+.q-uncommon{color:#0f0!important}
+.q-rare{color:#5599ff!important}
+.q-epic{color:#cc66ff!important}
+.q-legendary{color:#ff8800!important}
+.q-mythic{color:#ff4444!important}
+.q-common-bg{border-color:rgba(200,200,200,0.3)!important}
+.q-uncommon-bg{border-color:rgba(0,255,0,0.4)!important}
+.q-rare-bg{border-color:rgba(85,153,255,0.5)!important}
+.q-epic-bg{border-color:rgba(204,102,255,0.5)!important}
+.q-legendary-bg{border-color:rgba(255,136,0,0.5)!important}
+.q-mythic-bg{border-color:rgba(255,68,68,0.5)!important}
+
+/* Center combat area */
+.combat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:10px}
+.monster-info{background:rgba(255,0,0,0.05);border:1px solid rgba(255,0,0,0.2);border-radius:8px;padding:10px;margin-bottom:10px;text-align:center}
+.monster-info .m-name{color:#ff6b6b;font-size:1.1rem;font-weight:bold;margin-bottom:4px}
+.monster-info .m-hp-bar{width:100%;max-width:300px;height:12px;background:#333;border-radius:6px;overflow:hidden;margin:4px auto}
+.monster-info .m-hp-fill{height:100%;background:#ff4444;border-radius:6px;transition:width 0.3s}
+.monster-info .m-hp-text{font-size:0.8rem;color:#ff6b6b}
+.battle-log{flex:1;overflow-y:auto;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:8px;font-size:0.8rem;line-height:1.6;min-height:120px;max-height:300px}
+.battle-log .log-dmg{color:#ff6b6b}
+.battle-log .log-xp{color:#0f0}
+.battle-log .log-gold{color:#ffd700}
+.battle-log .log-item{color:#cc66ff}
+.battle-log .log-heal{color:#0f0}
+.battle-log .log-info{color:#888}
+.battle-log .log-dead{color:#ff4444;font-weight:bold}
+
+/* Map selector */
+.map-selector{margin-bottom:10px}
+.map-btn{width:100%;padding:8px 10px;margin-bottom:4px;background:rgba(0,255,0,0.04);border:1px solid rgba(0,255,0,0.2);border-radius:6px;color:#ccc;font-size:0.85rem;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;transition:all 0.15s}
+.map-btn:hover{border-color:#0f0;background:rgba(0,255,0,0.08)}
+.map-btn.active{border-color:#0f0;background:rgba(0,255,0,0.12);color:#0f0}
+.map-btn .map-lv{color:#888;font-size:0.75rem}
+.map-btn.active .map-lv{color:#0f0}
+
+/* Action buttons */
+.action-bar{display:flex;gap:8px;padding:10px;justify-content:center}
+.btn{padding:8px 20px;border:1px solid #0f0;background:transparent;color:#0f0;border-radius:6px;cursor:pointer;font-size:0.9rem;transition:all 0.15s}
+.btn:hover{background:rgba(0,255,0,0.15)}
+.btn:active{background:rgba(0,255,0,0.25)}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.btn-stop{border-color:#ff6b6b;color:#ff6b6b}
+.btn-stop:hover{background:rgba(255,107,107,0.15)}
+.btn-save{border-color:#ffd700;color:#ffd700}
+
+/* Inventory list */
+.inv-list{max-height:200px;overflow-y:auto}
+.inv-item{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:0.75rem;cursor:pointer;border-radius:4px;transition:background 0.1s}
+.inv-item:hover{background:rgba(0,255,0,0.08)}
+.inv-item .inv-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inv-item .inv-ops{display:flex;gap:4px}
+.inv-item .inv-ops button{font-size:0.65rem;padding:2px 6px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:#aaa;border-radius:3px;cursor:pointer}
+.inv-item .inv-ops button:hover{border-color:#0f0;color:#0f0}
+
+/* Chest panel */
+.chest-panel{margin-bottom:10px}
+.chest-btn{width:100%;padding:8px;margin-bottom:4px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.2);border-radius:6px;color:#ffd700;font-size:0.85rem;cursor:pointer;display:flex;justify-content:space-between;transition:all 0.15s}
+.chest-btn:hover{border-color:#ffd700;background:rgba(255,215,0,0.1)}
+.chest-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* Pet panel */
+.pet-slots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pet-slot{width:60px;height:60px;border:1px solid rgba(0,255,0,0.2);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:0.65rem;transition:all 0.15s;background:rgba(0,255,0,0.03)}
+.pet-slot:hover{border-color:#0f0}
+.pet-slot.active{border-color:#ffd700;background:rgba(255,215,0,0.08)}
+.pet-slot .pet-icon{font-size:1.4rem}
+.pet-slot .pet-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55px;text-align:center}
+.pet-empty{border-style:dashed;color:#555}
+
+/* Tooltip */
+.tooltip{position:fixed;background:#222;border:1px solid rgba(0,255,0,0.4);border-radius:8px;padding:10px;font-size:0.8rem;z-index:20;max-width:260px;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.6)}
+.tooltip .tt-name{font-weight:bold;font-size:0.9rem;margin-bottom:4px}
+.tooltip .tt-slot{color:#888;font-size:0.7rem;margin-bottom:6px}
+.tooltip .tt-stats{line-height:1.5}
+.tooltip .tt-stats span{display:block}
+.tooltip .tt-enh{color:#ffd700;margin-top:4px}
+
+/* Overlay */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;overflow-y:auto;padding:20px 10px}
 .overlay h2{font-size:2rem;margin-bottom:12px}
 .overlay p{font-size:1rem;margin-bottom:16px;color:#aaa}
@@ -54,473 +139,987 @@ body{background:#1a1a2e;min-height:100vh;font-family:'Segoe UI',sans-serif;color
 .overlay .sub{font-size:0.85rem;color:#666;margin-top:8px}
 .overlay-lb{width:100%;max-width:340px;margin-top:16px}
 .overlay-lb h3{color:#0f0;font-size:1rem;margin-bottom:8px;text-align:center}
-.overlay-lb .lb-list{max-height:240px}
 .show-lb-btn{font-size:0.85rem!important;padding:8px 20px!important;border-color:rgba(0,255,0,0.4)!important;color:rgba(0,255,0,0.7)!important;margin-top:12px!important}
-#endScreen .end-info{font-size:1rem;color:#aaa;margin-bottom:8px;line-height:1.6}
-#endScreen .end-score{font-size:1.4rem;color:#0f0;margin-bottom:10px}
-@media(max-width:600px){
-  .main-wrap{flex-direction:column;align-items:center}
-  .game-area{min-width:auto;width:100%}
-  .leaderboard{width:100%;max-width:none}
-  .scene-text{max-height:200px}
-  .score-bar{font-size:0.8rem;gap:10px}
+
+/* Leaderboard */
+.lb-list{list-style:none;max-height:300px;overflow-y:auto}
+.lb-list li{display:flex;justify-content:space-between;padding:5px 4px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem}
+.lb-list li:first-child{color:#ffd700;font-weight:bold}
+.lb-list li:nth-child(2){color:#c0c0c0}
+.lb-list li:nth-child(3){color:#cd7f32}
+.lb-rank{width:24px;text-align:center}
+.lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 6px}
+.lb-score{font-weight:bold;color:#0f0;min-width:28px;text-align:right}
+.lb-status{text-align:center;font-size:0.7rem;color:#666;margin-top:6px}
+.lb-status.online{color:#0f0}
+
+/* Responsive */
+@media(max-width:768px){
+  .main{flex-direction:column;height:auto}
+  .panel-left,.panel-right{width:100%;border:none;display:none;overflow:visible;padding:10px 12px}
+  .panel-left.mob-show,.panel-right.mob-show,.panel-center.mob-show{display:flex!important}
+  .panel-center{min-height:50vh}
+  .tab-bar{display:flex}
+  .top-bar{padding:6px 10px}
+  .top-bar .player-info{font-size:0.75rem;gap:8px}
+  .top-bar .hp-bar .bar-bg{width:60px}
+  .top-bar .xp-bar .bar-bg{width:45px}
 }
 </style>
 </head>
 <body>
-<div class="back"><a href="index.html">← 返回游戏列表</a></div>
-<div class="header">
-  <h1>🗡️ 文字冒险</h1>
-  <div class="score-bar">
-    分数: <span id="score">0</span>
-    &nbsp;|&nbsp;
-    最高: <span id="best">0</span>
-  </div>
-</div>
-<div class="stats-bar" id="statsBar" style="display:none">
-  ❤️ <span class="hp" id="hp">100</span>
-  &nbsp;⚔️ <span class="atk" id="atk">10</span>
-  &nbsp;🛡️ <span class="def" id="def">5</span>
-  &nbsp;💰 <span class="gold" id="gold">0</span>
-</div>
-<div class="main-wrap">
-  <div class="game-area">
-    <div class="game-box" id="gameBox">
-      <div class="scene-title" id="sceneTitle"></div>
-      <div class="scene-text" id="sceneText"></div>
-      <div class="choices" id="choices"></div>
-    </div>
-  </div>
-  <div class="leaderboard">
-    <h3>🏆 排行榜</h3>
-    <ul class="lb-list" id="lb"><li style="justify-content:center;color:#666">加载中...</li></ul>
-    <div class="lb-status" id="ls">等待连接...</div>
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <a class="back-link" href="index.html">← 返回</a>
+  <div class="player-info">
+    <span class="lv" id="dLv">Lv.1</span>
+    <span class="hp-bar"><span class="bar-bg"><span class="bar-fill" id="dHpBar" style="width:100%"></span></span><span class="hp-val" id="dHp">100/100</span></span>
+    <span class="gold">💰 <span id="dGold">0</span></span>
+    <span class="xp-bar"><span class="bar-bg"><span class="bar-fill" id="dXpBar" style="width:0%"></span></span><span class="xp-val" id="dXp">0/100</span></span>
+    <span>⚔️<span id="dAtk">10</span> 🛡️<span id="dDef">5</span></span>
   </div>
 </div>
 
+<!-- Main Layout -->
+<div class="main">
+  <!-- Left Panel: Equipment + Inventory -->
+  <div class="panel panel-left" id="pLeft">
+    <div class="section-title">⚔️ 装备栏</div>
+    <div class="equip-grid" id="equipGrid"></div>
+    <div class="section-title">🎒 背包 <span id="invCount" style="color:#888;font-size:0.75rem">(0/30)</span></div>
+    <div class="inv-list" id="invList"></div>
+  </div>
+
+  <!-- Center Panel: Map + Combat -->
+  <div class="panel panel-center mob-show" id="pCenter">
+    <div class="map-selector" id="mapSelector"></div>
+    <div class="combat-area">
+      <div class="monster-info" id="monsterInfo" style="display:none">
+        <div class="m-name" id="mName"></div>
+        <div class="m-hp-bar"><div class="m-hp-fill" id="mHpBar" style="width:100%"></div></div>
+        <div class="m-hp-text" id="mHpText"></div>
+      </div>
+      <div class="battle-log" id="battleLog"><div class="log-info">选择地图，点击「开始挂机」开始战斗</div></div>
+    </div>
+    <div class="action-bar">
+      <button class="btn" id="btnStart" onclick="startBattle()">⚔️ 开始挂机</button>
+      <button class="btn btn-stop" id="btnStop" onclick="stopBattle()" style="display:none">⏹ 停止</button>
+      <button class="btn btn-save" onclick="saveGame()">💾 保存</button>
+    </div>
+  </div>
+
+  <!-- Right Panel: Pets + Chests -->
+  <div class="panel panel-right" id="pRight">
+    <div class="section-title">🐾 宠物</div>
+    <div class="pet-slots" id="petSlots"></div>
+    <div id="petInfo" style="font-size:0.75rem;color:#888;margin-bottom:10px"></div>
+    <div class="section-title">🎁 宝箱</div>
+    <div class="chest-panel" id="chestPanel"></div>
+    <div class="section-title">🔨 强化</div>
+    <div id="enhancePanel" style="font-size:0.8rem;color:#888">选择背包中的装备进行强化</div>
+    <div class="section-title" style="margin-top:12px">🏆 排行榜</div>
+    <ul class="lb-list" id="lb2" style="max-height:200px"></ul>
+    <div class="lb-status" id="ls2"></div>
+  </div>
+</div>
+
+<!-- Mobile Tab Bar -->
+<div class="tab-bar" id="tabBar">
+  <button class="active" onclick="switchTab('center')">⚔️ 战斗</button>
+  <button onclick="switchTab('left')">🎒 装备</button>
+  <button onclick="switchTab('right')">🐾 宠物</button>
+</div>
+
+<!-- Start Screen -->
 <div class="overlay" id="startScreen">
-  <h2>🗡️ 文字冒险</h2>
+  <h2>🗡️ 文字冒险 RPG</h2>
   <p>输入你的冒险者名号</p>
   <input type="text" id="ni" placeholder="你的昵称" maxlength="12" autocomplete="off">
   <br><button onclick="startGame()">开始冒险</button>
-  <div class="sub">每次选择都会影响结局和分数</div>
+  <div class="sub">挂机刷怪 · 收集装备 · 强化升级</div>
   <button class="show-lb-btn" onclick="toggleOverlayLB()">🏆 查看排行榜</button>
   <div class="overlay-lb" id="overlayLB" style="display:none">
     <ul class="lb-list" id="overlayLBList"><li style="justify-content:center;color:#666">加载中...</li></ul>
   </div>
 </div>
 
-<div class="overlay" id="endScreen" style="display:none">
-  <h2 id="endTitle">📜 冒险结束</h2>
-  <div class="end-info" id="endInfo"></div>
-  <div class="end-score" id="endScore"></div>
-  <button onclick="startGame()">再次冒险</button>
-</div>
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip" style="display:none"></div>
 
 <script>
-// ============ API ============
+// ============================================================
+//  CORE FRAMEWORK - Player State, Save/Load, UI Update
+// ============================================================
+
+// API
 var AK='$2a$10$JDS9gl1LtJJ1GfLQy013YOEMq8xzl5QLHxoKGghwH7uIRxVbZQZNi';
 var BI='6a1b0748ddf5aa59f778bc7a';
 var AU='https://api.jsonbin.io/v3/b/'+BI;
-var RI=30000;
-var nk=localStorage.getItem('adv_nk')||'';
-var bestScore=parseInt(localStorage.getItem('adv_best')||'0');
-var ni=document.getElementById('ni');
-if(nk)ni.value=nk;
-document.getElementById('best').textContent=bestScore;
 
-// ============ GAME STATE ============
-var state={};
-function resetState(){
-  state={hp:100,maxHp:100,atk:10,def:5,gold:0,score:0,items:[],flags:{},scene:'start'};
+// Quality definitions
+var QUALITIES=[
+  {id:'common',name:'普通',color:'#ccc',prob:0.50},
+  {id:'uncommon',name:'优秀',color:'#0f0',prob:0.25},
+  {id:'rare',name:'稀有',color:'#5599ff',prob:0.14},
+  {id:'epic',name:'史诗',color:'#cc66ff',prob:0.08},
+  {id:'legendary',name:'传说',color:'#ff8800',prob:0.025},
+  {id:'mythic',name:'神话',color:'#ff4444',prob:0.005}
+];
+var QUALITY_MAP={};QUALITIES.forEach(function(q){QUALITY_MAP[q.id]=q;});
+
+// Equipment slot definitions
+var SLOT_DEFS=[
+  {id:'weapon',name:'武器',icon:'⚔️'},
+  {id:'helmet',name:'头盔',icon:'🪖'},
+  {id:'bracer',name:'护腕',icon:'💪'},
+  {id:'chest',name:'胸甲',icon:'🛡️'},
+  {id:'legs',name:'腿甲',icon:'👖'},
+  {id:'boots',name:'鞋子',icon:'👢'},
+  {id:'necklace',name:'项链',icon:'📿'},
+  {id:'ring',name:'戒指',icon:'💍'}
+];
+
+// Base player stats per level
+function baseHp(lv){return 80+lv*20;}
+function baseAtk(lv){return 8+lv*2;}
+function baseDef(lv){return 3+lv*1;}
+function xpNeeded(lv){return lv*100;}
+
+// Player state
+var P={};
+function defaultPlayer(){
+  return {
+    name:'', level:1, xp:0, gold:0, score:0,
+    hp:100, maxHp:100,
+    baseAtk:10, baseDef:5,
+    // equipment: slotId -> item or null
+    equipment:{weapon:null,helmet:null,bracer:null,chest:null,legs:null,boots:null,necklace:null,ring:null},
+    // inventory: array of items, max 30
+    inventory:[],
+    // pets: array of pet objects
+    pets:[],
+    activePet:null, // index into pets, or null
+    // materials: {matId: count}
+    materials:{},
+    // current map
+    currentMap:0,
+    // battle state
+    battling:false,
+    // timestamp
+    lastSave:0
+  };
 }
 
-// ============ STORY DATA ============
-var STORY={
-start:{
-  title:'🏰 王国边境',
-  text:'你是一名流浪冒险者，来到了被黑暗笼罩的边境小镇。镇长告诉你：<span class="highlight">「北方的魔王城堡里藏着一颗能净化一切黑暗的圣石，但无数勇者有去无回。」</span>\n\n你握紧了手中的剑，决定出发。',
-  choices:[
-    {text:'⚔️ 直接前往魔王城堡',next:'castle_gate'},
-    {text:'🏪 先去镇上商店看看',next:'shop'},
-    {text:'🌲 走小路探索森林',next:'forest_1'}
-  ]
-},
-shop:{
-  title:'🏪 边境商店',
-  text:'店主是个笑容可掬的矮人。<span class="highlight">「冒险者！来看看我的宝贝吧。」</span>',
-  choices:[
-    {text:'🗡️ 铁剑（攻击+5）— 30金',next:'shop_done',action:function(){if(state.gold>=30){state.gold-=30;state.atk+=5;state.score+=10;return'你买下了铁剑，感觉力量大增！'}return'<span class="danger">金币不够！</span>'},req:function(){return state.gold>=30}},
-    {text:'🛡️ 铁盾（防御+5）— 30金',next:'shop_done',action:function(){if(state.gold>=30){state.gold-=30;state.def+=5;state.score+=10;return'你买下了铁盾，安全感倍增！'}return'<span class="danger">金币不够！</span>'},req:function(){return state.gold>=30}},
-    {text:'🧪 生命药水（回复50HP）— 20金',next:'shop_done',action:function(){if(state.gold>=20){state.gold-=20;state.hp=Math.min(state.maxHp,state.hp+50);state.score+=5;return'<span class="heal">你喝下药水，恢复了50点生命！</span>'}return'<span class="danger">金币不够！</span>'},req:function(){return state.gold>=20}},
-    {text:'👋 离开商店',next:'start'}
-  ]
-},
-shop_done:{
-  title:'🏪 边境商店',
-  text:'交易完成！店主笑着说：<span class="highlight">「祝你好运，冒险者！」</span>',
-  choices:[
-    {text:'继续看看',next:'shop'},
-    {text:'出发冒险',next:'start'}
-  ]
-},
-forest_1:{
-  title:'🌲 幽暗森林',
-  text:'你走入茂密的森林，空气中弥漫着潮湿的气息。突然，前方传来争吵声——一个哥布林正在抢劫一位老人！',
-  choices:[
-    {text:'⚔️ 冲上去救老人',next:'forest_fight',action:function(){state.flags.savedOldMan=true;return''}},
-    {text:'🤫 悄悄绕过去',next:'forest_deep'},
-    {text:'🔙 返回小镇',next:'start'}
-  ]
-},
-forest_fight:{
-  title:'⚔️ 森林遭遇战',
-  text:'你拔剑冲向哥布林！',
-  combat:{enemy:'哥布林',enemyHp:30,enemyAtk:8,reward:{gold:15,score:20},next:'forest_after_fight'}
-},
-forest_after_fight:{
-  title:'🎉 胜利！',
-  text:'你击败了哥布林！老人感激地递给你一些金币。\n老人：<span class="highlight">「谢谢你，年轻人。我告诉你一个秘密——森林深处有一棵<span class="highlight">古树</span>，它的树洞里藏着宝物。」</span>',
-  choices:[
-    {text:'🌲 去森林深处找古树',next:'ancient_tree'},
-    {text:'🔙 返回小镇',next:'start'}
-  ]
-},
-forest_deep:{
-  title:'🌲 森林深处',
-  text:'你小心翼翼地穿过灌木丛，发现了一个闪闪发光的东西——是一个宝箱！但旁边有一条蛇在守护。',
-  choices:[
-    {text:'⚔️ 与蛇战斗夺取宝箱',next:'snake_fight'},
-    {text:'🤫 悄悄溜走',next:'forest_clearing'}
-  ]
-},
-snake_fight:{
-  title:'⚔️ 蛇之战',
-  text:'你与巨蛇展开搏斗！',
-  combat:{enemy:'巨蛇',enemyHp:25,enemyAtk:12,reward:{gold:20,score:25},next:'snake_win'}
-},
-snake_win:{
-  title:'🎁 宝箱',
-  text:'你击败了巨蛇，打开了宝箱。里面有一颗<span class="highlight">发光的宝石</span>和一些金币！',
-  onEnter:function(){state.items.push('宝石');state.gold+=20;state.score+=15;},
-  choices:[
-    {text:'🌲 继续深入森林',next:'ancient_tree'},
-    {text:'🔙 返回小镇',next:'start'}
-  ]
-},
-ancient_tree:{
-  title:'🌳 古树',
-  text:'你找到了那棵参天古树。粗壮的树干上有一个树洞，里面隐约发出微光。',
-  choices:[
-    {text:'🕳️ 把手伸进树洞',next:'tree_hole'},
-    {text:'🔙 返回',next:'forest_clearing'}
-  ]
-},
-tree_hole:{
-  title:'✨ 古树的馈赠',
-  text:'你的手触到了一个冰凉的物体——是一把<span class="highlight">古老的魔法匕首</span>！它散发着微弱的光芒，似乎蕴含着某种力量。',
-  onEnter:function(){state.items.push('魔法匕首');state.atk+=8;state.score+=30;},
-  choices:[
-    {text:'⚔️ 前往魔王城堡',next:'castle_gate'},
-    {text:'🔙 返回小镇准备一下',next:'start'}
-  ]
-},
-forest_clearing:{
-  title:'🌿 林间空地',
-  text:'你来到一片开阔的空地，阳光从树冠间洒落。远处能看到魔王城堡的轮廓。',
-  choices:[
-    {text:'⚔️ 前往魔王城堡',next:'castle_gate'},
-    {text:'🌲 继续探索森林',next:'forest_deep'},
-    {text:'🔙 返回小镇',next:'start'}
-  ]
-},
-castle_gate:{
-  title:'🏰 魔王城堡大门',
-  text:'巨大的黑色城堡矗立在你面前，铁门半开着，仿佛在邀请你进入。门口站着一个骷髅守卫。',
-  choices:[
-    {text:'⚔️ 正面挑战骷髅守卫',next:'skeleton_fight'},
-    {text:'🕳️ 从侧面的破墙潜入',next:'castle_sneak'},
-    function(){return state.items.indexOf('魔法匕首')>=0?{text:'🗡️ 用魔法匕首发出光芒驱散骷髅',next:'castle_magic',action:function(){state.score+=20;return''}}:null}
-  ].filter(function(c){return c!==null})
-},
-skeleton_fight:{
-  title:'💀 骷髅守卫',
-  text:'骷髅守卫举起生锈的剑向你扑来！',
-  combat:{enemy:'骷髅守卫',enemyHp:45,enemyAtk:14,reward:{gold:25,score:30},next:'castle_hall'}
-},
-castle_sneak:{
-  title:'🕳️ 潜入城堡',
-  text:'你从侧面的破墙钻了进去，成功避开了守卫！但你不小心踩到了什么东西——<span class="danger">是一具冒险者的遗骸...</span>旁边有一把剑和一些金币。',
-  onEnter:function(){state.gold+=15;state.score+=10;},
-  choices:[
-    {text:'⚔️ 拿起剑继续前进',next:'castle_hall',action:function(){state.atk+=3;return'你拿起了遗骸旁的剑。'}},
-    {text:'🕯️ 为他祈祷后继续',next:'castle_hall',action:function(){state.score+=5;return'你默默祈祷。也许这就是冒险者的宿命...'}}
-  ]
-},
-castle_magic:{
-  title:'✨ 魔法匕首的光芒',
-  text:'魔法匕首发出耀眼的光芒，骷髅守卫发出痛苦的嘶吼，化为灰烬消散了。大门完全敞开了。',
-  choices:[
-    {text:'🏰 进入城堡',next:'castle_hall'}
-  ]
-},
-castle_hall:{
-  title:'🏰 城堡大厅',
-  text:'大厅里阴暗潮湿，墙壁上的火把忽明忽暗。前方有两条路：左边传来奇怪的声响，右边是一条安静的走廊。',
-  choices:[
-    {text:'👈 走左边（有声响）',next:'castle_dungeon'},
-    {text:'👉 走右边（安静）',next:'castle_library'},
-    {text:'⬆️ 直接上楼',next:'castle_stairs'}
-  ]
-},
-castle_dungeon:{
-  title:'⛓️ 地牢',
-  text:'你走进地牢，发现一个被囚禁的精灵！她说：<span class="highlight">「求你救救我！我知道魔王的弱点——他怕火！」</span>',
-  choices:[
-    {text:'🔓 打开牢门救她',next:'castle_free_elf',action:function(){state.flags.freedElf=true;state.score+=25;return''}},
-    {text:'❌ 不管她，继续前进',next:'castle_stairs'}
-  ]
-},
-castle_free_elf:{
-  title:'🧝 精灵的礼物',
-  text:'精灵感激地说：<span class="highlight">「谢谢你！这个给你。」</span>她递给你一个<span class="highlight">火之护符</span>。\n<span class="highlight">「用它可以释放火焰之力，对魔王特别有效！」</span>',
-  onEnter:function(){state.items.push('火之护符');state.score+=15;},
-  choices:[
-    {text:'⬆️ 上楼找魔王',next:'castle_stairs'}
-  ]
-},
-castle_library:{
-  title:'📚 图书馆',
-  text:'满是灰尘的书架间，你发现了一本发着微光的古书。翻开一看，记载着<span class="highlight">「生命之泉」</span>的配方。',
-  onEnter:function(){state.hp=Math.min(state.maxHp,state.hp+40);state.score+=15;},
-  choices:[
-    {text:'📖 仔细研读（恢复40HP）',next:'castle_stairs',action:function(){return'<span class="heal">你按照古书的配方调配了药剂，感觉精神焕发！</span>'}},
-    {text:'⬆️ 带着书上楼',next:'castle_stairs',action:function(){state.items.push('古书');return'你把古书收好。'}}
-  ]
-},
-castle_stairs:{
-  title:'⬆️ 通往魔王之间',
-  text:'你走上旋转楼梯，心跳加速。最顶层的大门紧闭着，门上刻着古老的符文。',
-  choices:[
-    {text:'🚪 推开大门',next:'boss_fight'},
-    {text:'🔙 回去再准备一下',next:'castle_hall'}
-  ]
-},
-boss_fight:{
-  title:'👹 魔王',
-  text:'大门轰然打开，一个巨大的身影坐在王座上。<span class="danger">「又一个送死的勇者。」</span>魔王缓缓站起，黑暗之力在他周身涌动。',
-  combat:{enemy:'魔王',enemyHp:80,enemyAtk:20,reward:{gold:50,score:100},next:'boss_win'}
-},
-boss_win:{
-  title:'👑 击败魔王！',
-  text:'魔王发出不甘的怒吼，化为黑烟消散了。在他身后的祭台上，你看到了那颗<span class="highlight">圣石</span>——散发着温暖而纯净的光芒。',
-  choices:[
-    {text:'✨ 拿起圣石',next:'ending_good'}
-  ]
-},
-ending_good:{
-  title:'🌟 光明归来',
-  text:'当你触碰到圣石的瞬间，一股温暖的力量涌遍全身。城堡开始崩塌，你带着圣石冲出了城堡。\n\n回到小镇时，黑暗已经散去，阳光重新照耀大地。人们欢呼着迎接你——<span class="highlight">你成为了传说中的英雄！</span>',
-  ending:true,
-  endingType:'hero',
-  endingName:'传说勇者',
-  onEnter:function(){state.score+=50;}
-},
-ending_dead:{
-  title:'💀 倒在路上',
-  text:'你的身体终于承受不住了...黑暗吞噬了你。\n\n也许下一个冒险者能完成你未竟的使命...',
-  ending:true,
-  endingType:'dead',
-  endingName:'壮烈牺牲',
-  onEnter:function(){state.score=Math.floor(state.score*0.3);}
-},
-ending_retreat:{
-  title:'🚪 放弃冒险',
-  text:'你转身离开了城堡。也许你还没有准备好面对这一切。\n\n回到小镇后，你过上了平静的生活，但心中始终有一个遗憾...',
-  ending:true,
-  endingType:'retreat',
-  endingName:'隐退之人',
-  onEnter:function(){state.score=Math.floor(state.score*0.5);}
-}
-};
+// Item generator - placeholder, will be expanded
+function genItemId(){return 'item_'+Date.now()+'_ '+Math.random().toString(36).substr(2,5);}
 
-// ============ COMBAT SYSTEM ============
-function doCombat(scene){
-  var c=STORY[scene].combat;
-  var eHp=c.enemyHp,eAtk=c.enemyAtk;
-  var log='<span class="danger">⚔️ 战斗开始！'+c.enemy+' HP:'+eHp+'</span>\n\n';
-  var rounds=0;
-  while(state.hp>0&&eHp>0&&rounds<20){
-    rounds++;
-    var myDmg=Math.max(1,state.atk+Math.floor(Math.random()*6)-3);
-    eHp-=myDmg;
-    log+='第'+rounds+'回合：你造成了 <span class="highlight">'+myDmg+'</span> 点伤害';
-    if(eHp<=0){log+='，'+c.enemy+'被击败了！\n';break;}
-    var eDmg=Math.max(1,eAtk+Math.floor(Math.random()*6)-3-state.def);
-    state.hp-=eDmg;
-    log+='，'+c.enemy+'造成了 <span class="danger">'+eDmg+'</span> 点伤害（你HP:'+Math.max(0,state.hp)+'）\n';
+// ============================================================
+//  UI RENDER FUNCTIONS
+// ============================================================
+
+function updateTopBar(){
+  var xpNeed=xpNeeded(P.level);
+  document.getElementById('dLv').textContent='Lv.'+P.level;
+  document.getElementById('dHp').textContent=P.hp+'/'+P.maxHp;
+  document.getElementById('dHpBar').style.width=Math.max(0,P.hp/P.maxHp*100)+'%';
+  document.getElementById('dGold').textContent=P.gold;
+  document.getElementById('dXp').textContent=P.xp+'/'+xpNeed;
+  document.getElementById('dXpBar').style.width=Math.min(100,P.xp/xpNeed*100)+'%';
+  var totalAtk=P.baseAtk,totalDef=P.baseDef,totalHp=baseHp(P.level);
+  // Sum equipment stats
+  for(var s in P.equipment){
+    var it=P.equipment[s];
+    if(it){
+      totalAtk+=(it.stats.atk||0);
+      totalDef+=(it.stats.def||0);
+      totalHp+=(it.stats.hp||0);
+    }
   }
-  if(state.hp<=0){
-    log+='\n<span class="danger">你被'+c.enemy+'击败了...</span>';
-    return{log:log,next:'ending_dead',won:false};
+  // Pet bonus
+  if(P.activePet!==null&&P.pets[P.activePet]){
+    var pet=P.pets[P.activePet];
+    if(pet.bonus.atk)totalAtk=Math.floor(totalAtk*(1+pet.bonus.atk));
+    if(pet.bonus.def)totalDef=Math.floor(totalDef*(1+pet.bonus.def));
+    if(pet.bonus.hp)totalHp=Math.floor(totalHp*(1+pet.bonus.hp));
   }
-  state.gold+=c.reward.gold;
-  state.score+=c.reward.score;
-  log+='\n<span class="heal">🎉 胜利！获得 '+c.reward.gold+' 金币，+'+c.reward.score+' 分</span>';
-  updateStats();
-  return{log:log,next:c.next,won:true};
+  P.maxHp=totalHp;
+  if(P.hp>P.maxHp)P.hp=P.maxHp;
+  document.getElementById('dAtk').textContent=totalAtk;
+  document.getElementById('dDef').textContent=totalDef;
+  document.getElementById('dHp').textContent=P.hp+'/'+P.maxHp;
+  document.getElementById('dHpBar').style.width=Math.max(0,P.hp/P.maxHp*100)+'%';
 }
 
-// ============ RENDER ============
-function renderScene(sceneId){
-  if(!STORY[sceneId]){sceneId='start';}
-  var scene=STORY[sceneId];
-  state.scene=sceneId;
-  if(scene.onEnter)scene.onEnter();
-  updateStats();
-
-  document.getElementById('sceneTitle').textContent=scene.title;
-  var text=scene.text;
-
-  if(scene.combat){
-    var result=doCombat(sceneId);
-    document.getElementById('sceneText').innerHTML=result.log.replace(/\n/g,'<br>');
-    var div=document.getElementById('choices');
-    div.innerHTML='';
-    var btn=document.createElement('button');
-    btn.className='choice-btn';
-    btn.textContent=result.won?'继续前进':'重新开始';
-    btn.onclick=function(){
-      if(result.won)renderScene(result.next);
-      else startGame();
-    };
-    div.appendChild(btn);
-    return;
-  }
-
-  if(scene.ending){
-    document.getElementById('sceneText').innerHTML=text.replace(/\n/g,'<br>');
-    showEnding(scene);
-    return;
-  }
-
-  document.getElementById('sceneText').innerHTML=text.replace(/\n/g,'<br>');
-  var div=document.getElementById('choices');
-  div.innerHTML='';
-  scene.choices.forEach(function(ch){
-    if(ch.req&&!ch.req())return;
-    var btn=document.createElement('button');
-    btn.className='choice-btn';
-    btn.textContent=ch.text;
-    btn.onclick=function(){
-      var extra='';
-      if(ch.action)extra=ch.action();
-      if(extra&&extra.length>0){
-        document.getElementById('sceneText').innerHTML+=('<br><br>'+extra);
-      }
-      renderScene(ch.next);
-    };
-    div.appendChild(btn);
+function getEquipGridHTML(){
+  var h='';
+  SLOT_DEFS.forEach(function(sl){
+    var it=P.equipment[sl.id];
+    if(it){
+      var q=QUALITY_MAP[it.quality];
+      h+='<div class="equip-slot has-item q-'+it.quality+'-bg" onmouseenter="showTooltip(event,\''+it.id+'\',\'equip\')" onmouseleave="hideTooltip()" onclick="unequipItem(\''+sl.id+'\')">';
+      h+='<span class="slot-name">'+sl.icon+' '+sl.name+'</span>';
+      h+='<span class="slot-item q-'+it.quality+'">'+it.name+(it.enhance>0?'+'+it.enhance:'')+'</span>';
+      h+='</div>';
+    }else{
+      h+='<div class="equip-slot empty"><span class="slot-name">'+sl.icon+' '+sl.name+'</span><span class="slot-item">空</span></div>';
+    }
   });
+  return h;
 }
 
-function updateStats(){
-  document.getElementById('score').textContent=state.score;
-  document.getElementById('hp').textContent=Math.max(0,state.hp);
-  document.getElementById('atk').textContent=state.atk;
-  document.getElementById('def').textContent=state.def;
-  document.getElementById('gold').textContent=state.gold;
-  document.getElementById('statsBar').style.display='flex';
+function renderEquipGrid(){document.getElementById('equipGrid').innerHTML=getEquipGridHTML();}
+
+function getInvHTML(){
+  if(!P.inventory.length)return '<div style="color:#555;font-size:0.75rem;padding:8px;text-align:center">背包为空</div>';
+  var h='';
+  P.inventory.forEach(function(it,i){
+    var q=QUALITY_MAP[it.quality];
+    h+='<div class="inv-item" onmouseenter="showTooltip(event,\''+it.id+'\',\'inv\')" onmouseleave="hideTooltip()">';
+    h+='<span class="inv-name q-'+it.quality+'">'+it.name+(it.enhance>0?'+'+it.enhance:'')+'</span>';
+    h+='<span class="inv-ops">';
+    h+='<button onclick="equipItem('+i+')">装备</button>';
+    h+='<button onclick="sellItem('+i+')">出售</button>';
+    h+='</span></div>';
+  });
+  return h;
+}
+function renderInv(){
+  document.getElementById('invList').innerHTML=getInvHTML();
+  document.getElementById('invCount').textContent='('+P.inventory.length+'/30)';
 }
 
-function showEnding(scene){
-  document.getElementById('endScreen').style.display='flex';
-  document.getElementById('endTitle').textContent='📜 '+scene.endingName;
-  document.getElementById('endInfo').innerHTML='结局: <span class="highlight">'+scene.endingName+'</span><br>剩余HP: '+Math.max(0,state.hp)+'<br>收集物品: '+(state.items.length?state.items.join('、'):'无');
-  document.getElementById('endScore').textContent='最终得分: '+state.score;
-  if(state.score>bestScore){bestScore=state.score;localStorage.setItem('adv_best',bestScore);}
-  document.getElementById('best').textContent=bestScore;
-  if(nk&&state.score>0)submitScore(nk,state.score);
+function renderPets(){
+  var h='';
+  for(var i=0;i<4;i++){
+    if(P.pets[i]){
+      var pet=P.pets[i];
+      var active=P.activePet===i;
+      h+='<div class="pet-slot'+(active?' active':'')+'" onclick="togglePet('+i+')">';
+      h+='<span class="pet-icon">'+pet.icon+'</span>';
+      h+='<span class="pet-name q-'+pet.quality+'">'+pet.name+'</span>';
+      h+='</div>';
+    }else{
+      h+='<div class="pet-slot pet-empty"><span class="pet-icon">?</span><span class="pet-name">空</span></div>';
+    }
+  }
+  document.getElementById('petSlots').innerHTML=h;
+  var info='';
+  if(P.activePet!==null&&P.pets[P.activePet]){
+    var pet=P.pets[P.activePet];
+    info='当前宠物: <span class="q-'+pet.quality+'">'+pet.name+'</span> ';
+    var bonuses=[];
+    if(pet.bonus.atk)bonuses.push('攻击+'+Math.round(pet.bonus.atk*100)+'%');
+    if(pet.bonus.def)bonuses.push('防御+'+Math.round(pet.bonus.def*100)+'%');
+    if(pet.bonus.hp)bonuses.push('生命+'+Math.round(pet.bonus.hp*100)+'%');
+    if(pet.bonus.xp)bonuses.push('经验+'+Math.round(pet.bonus.xp*100)+'%');
+    if(pet.bonus.gold)bonuses.push('金币+'+Math.round(pet.bonus.gold*100)+'%');
+    if(pet.bonus.crit)bonuses.push('暴击+'+Math.round(pet.bonus.crit*100)+'%');
+    info+=bonuses.join(' ');
+  }
+  document.getElementById('petInfo').innerHTML=info;
 }
 
-// ============ GAME CONTROL ============
+// Mobile tab switching
+function switchTab(panel){
+  document.getElementById('pLeft').classList.remove('mob-show');
+  document.getElementById('pCenter').classList.remove('mob-show');
+  document.getElementById('pRight').classList.remove('mob-show');
+  document.getElementById('pLeft').style.display='';
+  document.getElementById('pRight').style.display='';
+  if(panel==='left'){document.getElementById('pLeft').classList.add('mob-show');document.getElementById('pLeft').style.display='flex';}
+  else if(panel==='right'){document.getElementById('pRight').classList.add('mob-show');document.getElementById('pRight').style.display='flex';}
+  else{document.getElementById('pCenter').classList.add('mob-show');var c=document.getElementById('pCenter');c.style.display='flex';}
+  var btns=document.querySelectorAll('.tab-bar button');
+  btns.forEach(function(b){b.classList.remove('active');});
+  if(panel==='center')btns[0].classList.add('active');
+  else if(panel==='left')btns[1].classList.add('active');
+  else btns[2].classList.add('active');
+}
+
+// Tooltip
+var tooltipEl=document.getElementById('tooltip');
+function showTooltip(e,itemId,source){
+  var it=null;
+  if(source==='equip'){
+    for(var s in P.equipment){if(P.equipment[s]&&P.equipment[s].id===itemId){it=P.equipment[s];break;}}
+  }else{
+    P.inventory.forEach(function(x){if(x.id===itemId)it=x;});
+  }
+  if(!it)return;
+  var q=QUALITY_MAP[it.quality];
+  var h='<div class="tt-name q-'+it.quality+'">'+it.name+(it.enhance>0?'+'+it.enhance:'')+'</div>';
+  h+='<div class="tt-slot">'+it.slotName+' · '+q.name+'</div>';
+  h+='<div class="tt-stats">';
+  if(it.stats.atk)h+='<span style="color:#f80">⚔️ 攻击 +'+it.stats.atk+'</span>';
+  if(it.stats.def)h+='<span style="color:#0ff">🛡️ 防御 +'+it.stats.def+'</span>';
+  if(it.stats.hp)h+='<span style="color:#ff6b6b">❤️ 生命 +'+it.stats.hp+'</span>';
+  if(it.stats.crit)h+='<span style="color:#ffd700">💥 暴击 +'+Math.round(it.stats.crit*100)+'%</span>';
+  h+='</div>';
+  if(it.enhance>0)h+='<div class="tt-enh">强化等级: +'+it.enhance+'</div>';
+  h+='<div style="color:#666;font-size:0.65rem;margin-top:4px">点击装备栏可卸下</div>';
+  tooltipEl.innerHTML=h;
+  tooltipEl.style.display='block';
+  tooltipEl.style.left=Math.min(e.clientX+10,window.innerWidth-270)+'px';
+  tooltipEl.style.top=Math.min(e.clientY+10,window.innerHeight-200)+'px';
+}
+function hideTooltip(){tooltipEl.style.display='none';}
+
+// ============================================================
+//  EQUIPMENT MANAGEMENT
+// ============================================================
+
+function equipItem(invIndex){
+  if(invIndex<0||invIndex>=P.inventory.length)return;
+  var it=P.inventory[invIndex];
+  var slot=it.slot;
+  // If slot occupied, swap
+  var old=P.equipment[slot];
+  P.equipment[slot]=it;
+  P.inventory.splice(invIndex,1);
+  if(old)P.inventory.push(old);
+  if(P.inventory.length>30){
+    // Overflow: sell cheapest
+    P.inventory.sort(function(a,b){return qualityIndex(a.quality)-qualityIndex(b.quality);});
+    var overflow=P.inventory.pop();
+    P.gold+=sellPrice(overflow);
+  }
+  updateTopBar();renderEquipGrid();renderInv();
+}
+
+function unequipItem(slotId){
+  var it=P.equipment[slotId];
+  if(!it)return;
+  if(P.inventory.length>=30){addLog('背包已满，无法卸下！','info');return;}
+  P.inventory.push(it);
+  P.equipment[slotId]=null;
+  updateTopBar();renderEquipGrid();renderInv();
+}
+
+function sellItem(invIndex){
+  if(invIndex<0||invIndex>=P.inventory.length)return;
+  var it=P.inventory[invIndex];
+  var price=sellPrice(it);
+  P.gold+=price;
+  P.inventory.splice(invIndex,1);
+  addLog('💰 出售 '+it.name+' 获得 '+price+' 金币','gold');
+  updateTopBar();renderInv();
+}
+
+function qualityIndex(q){
+  var map={common:0,uncommon:1,rare:2,epic:3,legendary:4,mythic:5};
+  return map[q]||0;
+}
+function sellPrice(it){
+  var base=[5,15,40,100,300,1000];
+  var price=base[qualityIndex(it.quality)]||5;
+  price+=it.enhance*10;
+  return price;
+}
+
+// ============================================================
+//  GAME SAVE / LOAD
+// ============================================================
+
+function saveGame(){
+  P.lastSave=Date.now();
+  try{localStorage.setItem('rpg_save',JSON.stringify(P));addLog('💾 游戏已保存','info');}catch(e){addLog('⚠️ 保存失败','info');}
+}
+function loadGame(){
+  try{
+    var d=localStorage.getItem('rpg_save');
+    if(d){
+      var saved=JSON.parse(d);
+      // Merge with defaults for any missing fields
+      var def=defaultPlayer();
+      for(var k in def){if(saved[k]===undefined)saved[k]=def[k];}
+      P=saved;
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+// ============================================================
+//  GAME START
+// ============================================================
+
+var nickname='';
 function startGame(){
-  nk=ni.value.trim()||'匿名玩家';
-  localStorage.setItem('adv_nk',nk);
+  nickname=document.getElementById('ni').value.trim()||'匿名玩家';
   document.getElementById('startScreen').style.display='none';
-  document.getElementById('endScreen').style.display='none';
-  resetState();
-  renderScene('start');
+  if(!loadGame()){
+    P=defaultPlayer();
+    P.name=nickname;
+  }
+  P.maxHp=baseHp(P.level);
+  if(P.hp<=0)P.hp=P.maxHp;
+  updateTopBar();renderEquipGrid();renderInv();renderPets();
+  renderMaps();renderChests();
+  addLog('🗡️ 欢迎回来，'+nickname+'！','info');
 }
 
 function toggleOverlayLB(){
   var lb=document.getElementById('overlayLB');
-  if(lb.style.display==='none'){
-    lb.style.display='block';
-    document.getElementById('overlayLBList').innerHTML=document.getElementById('lb').innerHTML;
-  }else{lb.style.display='none';}
+  lb.style.display=lb.style.display==='none'?'block':'none';
+  if(lb.style.display!=='none')document.getElementById('overlayLBList').innerHTML=document.getElementById('lb').innerHTML||'<li>暂无数据</li>';
 }
 
-// ============ LEADERBOARD ============
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function lbOK(){document.getElementById('ls').textContent='✅ 已同步 · '+new Date().toLocaleTimeString();document.getElementById('ls').className='lb-status online';}
-function lbErr(m){document.getElementById('ls').textContent='⚠️ '+(m||'同步失败');document.getElementById('ls').className='lb-status';}
+// Auto-save every 30s
+setInterval(function(){if(P.name)saveGame();},30000);
 
+// ============================================================
+//  MAP & MONSTER SYSTEM
+// ============================================================
+
+var MAPS=[
+  {id:0,name:'翡翠草原',lvRange:[1,5],color:'#0f0',desc:'宁静的草原，适合新手冒险者',
+    monsters:[
+      {name:'史莱姆',hp:30,atk:5,xp:10,gold:[3,8],dropRate:0.15,matDrop:0.3},
+      {name:'野兔',hp:20,atk:3,xp:6,gold:[2,5],dropRate:0.10,matDrop:0.2},
+      {name:'哥布林',hp:50,atk:10,xp:18,gold:[5,12],dropRate:0.20,matDrop:0.25}
+    ],mats:['草药','碎石']},
+  {id:1,name:'暗影森林',lvRange:[5,15],color:'#0a0',desc:'阴暗的森林，怪物更强',
+    monsters:[
+      {name:'毒蛇',hp:80,atk:18,xp:30,gold:[10,20],dropRate:0.18,matDrop:0.3},
+      {name:'狼人',hp:120,atk:25,xp:45,gold:[15,30],dropRate:0.20,matDrop:0.3},
+      {name:'树精',hp:150,atk:20,xp:50,gold:[20,35],dropRate:0.22,matDrop:0.35}
+    ],mats:['毒牙','暗影精华']},
+  {id:2,name:'熔岩洞穴',lvRange:[15,30],color:'#f44',desc:'炽热的洞穴，危机四伏',
+    monsters:[
+      {name:'火焰蜥蜴',hp:200,atk:40,xp:80,gold:[25,50],dropRate:0.20,matDrop:0.3},
+      {name:'岩石巨人',hp:350,atk:55,xp:120,gold:[40,70],dropRate:0.22,matDrop:0.35},
+      {name:'熔岩元素',hp:280,atk:65,xp:100,gold:[30,60],dropRate:0.25,matDrop:0.3}
+    ],mats:['火焰石','熔岩碎片']},
+  {id:3,name:'冰霜山脉',lvRange:[30,50],color:'#8cf',desc:'寒冷刺骨的雪山',
+    monsters:[
+      {name:'冰霜巨狼',hp:500,atk:80,xp:180,gold:[60,100],dropRate:0.22,matDrop:0.35},
+      {name:'雪怪',hp:700,atk:100,xp:250,gold:[80,140],dropRate:0.25,matDrop:0.3},
+      {name:'冰龙幼崽',hp:900,atk:120,xp:350,gold:[100,180],dropRate:0.28,matDrop:0.4}
+    ],mats:['冰晶','龙鳞碎片']},
+  {id:4,name:'深渊裂隙',lvRange:[50,75],color:'#a0f',desc:'通往深渊的裂缝',
+    monsters:[
+      {name:'暗影刺客',hp:1200,atk:160,xp:500,gold:[150,250],dropRate:0.25,matDrop:0.35},
+      {name:'堕落天使',hp:1800,atk:200,xp:700,gold:[200,350],dropRate:0.28,matDrop:0.4},
+      {name:'深渊领主',hp:2500,atk:250,xp:1000,gold:[300,500],dropRate:0.30,matDrop:0.45}
+    ],mats:['深渊碎片','灵魂结晶']},
+  {id:5,name:'魔王领域',lvRange:[75,100],color:'#f00',desc:'最终的试炼之地',
+    monsters:[
+      {name:'恶魔骑士',hp:3500,atk:350,xp:1500,gold:[400,700],dropRate:0.28,matDrop:0.4},
+      {name:'死灵法师',hp:4000,atk:400,xp:2000,gold:[500,900],dropRate:0.30,matDrop:0.45},
+      {name:'魔王分身',hp:6000,atk:500,xp:3000,gold:[800,1500],dropRate:0.35,matDrop:0.5}
+    ],mats:['魔王之血','暗黑结晶']}
+];
+
+// ============================================================
+//  EQUIPMENT GENERATION
+// ============================================================
+
+var QUALITY_STAT_MULT=[1,1.3,1.8,2.5,3.5,5];
+var SLOT_BASES={
+  weapon:{atk:5,def:0,hp:0,crit:0.02},
+  helmet:{atk:0,def:3,hp:15,crit:0},
+  bracer:{atk:2,def:2,hp:5,crit:0.01},
+  chest:{atk:0,def:6,hp:25,crit:0},
+  legs:{atk:0,def:4,hp:15,crit:0},
+  boots:{atk:1,def:3,hp:10,crit:0.01},
+  necklace:{atk:3,def:0,hp:10,crit:0.03},
+  ring:{atk:2,def:1,hp:5,crit:0.02}
+};
+
+function rollQuality(dropBonus){
+  var r=Math.random();var cum=0;
+  for(var i=QUALITIES.length-1;i>=0;i--){
+    var prob=QUALITIES[i].prob;
+    if(i>=3)prob*=(1+dropBonus*2);
+    cum+=prob;
+    if(r<cum)return QUALITIES[i].id;
+  }
+  return 'common';
+}
+
+function genEquipment(level,quality,forceSlot){
+  var slot=forceSlot||SLOT_DEFS[Math.floor(Math.random()*SLOT_DEFS.length)].id;
+  var slotDef=SLOT_DEFS.filter(function(s){return s.id===slot;})[0];
+  var base=SLOT_BASES[slot];
+  var qIdx=qualityIndex(quality);
+  var mult=QUALITY_STAT_MULT[qIdx];
+  var lvMult=1+level*0.08;
+  var stats={};
+  if(base.atk)stats.atk=Math.max(1,Math.floor(base.atk*mult*lvMult*(0.9+Math.random()*0.2)));
+  if(base.def)stats.def=Math.max(1,Math.floor(base.def*mult*lvMult*(0.9+Math.random()*0.2)));
+  if(base.hp)stats.hp=Math.max(5,Math.floor(base.hp*mult*lvMult*(0.9+Math.random()*0.2)));
+  if(base.crit)stats.crit=parseFloat((base.crit*mult*(0.8+Math.random()*0.4)).toFixed(3));
+  var prefixes={common:['破旧的','普通的'],uncommon:['精良的','结实的'],rare:['闪光的','魔法'],epic:['暗金','远古'],legendary:['传说','不朽'],mythic:['神圣','创世']};
+  var pArr=prefixes[quality]||['未知的'];
+  var p=pArr[Math.floor(Math.random()*pArr.length)];
+  return {id:genItemId(),name:p+slotDef.name,slot:slot,slotName:slotDef.name,quality:quality,level:level,stats:stats,enhance:0};
+}
+
+function genPet(quality,level){
+  var icons=['🐱','🐶','🦊','🐉','🦅','🐺','🦁','🐻','🐰','🐢'];
+  var names={common:['小猫','小狗'],uncommon:['狐狸','小鹰'],rare:['幼龙','战狼'],epic:['狮鹫','巨熊'],legendary:['神龙','凤凰'],mythic:['九尾狐','麒麟']};
+  var qArr=names[quality]||['宠物'];
+  var icon=icons[Math.floor(Math.random()*icons.length)];
+  var name=qArr[Math.floor(Math.random()*qArr.length)];
+  var qIdx=qualityIndex(quality);
+  var bonusVal=(qIdx+1)*0.03+level*0.002;
+  var types=['atk','def','hp','xp','gold','crit'];
+  var bonus={};
+  var mainType=types[Math.floor(Math.random()*types.length)];
+  bonus[mainType]=parseFloat(bonusVal.toFixed(3));
+  if(qIdx>=3){
+    var sec=types[Math.floor(Math.random()*types.length)];
+    if(!bonus[sec])bonus[sec]=parseFloat((bonusVal*0.5).toFixed(3));
+  }
+  return {id:genItemId(),name:name,icon:icon,quality:quality,level:level,bonus:bonus};
+}
+
+// ============================================================
+//  BATTLE SYSTEM
+// ============================================================
+
+var battleTimer=null;
+var currentMonster=null;
+
+function getMonster(map){
+  var monsters=MAPS[map].monsters;
+  var m=monsters[Math.floor(Math.random()*monsters.length)];
+  var lvRange=MAPS[map].lvRange;
+  var lv=lvRange[0]+Math.floor(Math.random()*(lvRange[1]-lvRange[0]+1));
+  var lvMult=1+lv*0.05;
+  return {name:m.name,level:lv,hp:Math.floor(m.hp*lvMult),maxHp:Math.floor(m.hp*lvMult),atk:Math.floor(m.atk*lvMult),xp:Math.floor(m.xp*lvMult),gold:[Math.floor(m.gold[0]*lvMult),Math.floor(m.gold[1]*lvMult)],dropRate:m.dropRate,matDrop:m.matDrop,mapId:map};
+}
+
+function getPlayerAtk(){
+  var atk=P.baseAtk;
+  for(var s in P.equipment){var it=P.equipment[s];if(it)atk+=(it.stats.atk||0);}
+  if(P.activePet!==null&&P.pets[P.activePet]&&P.pets[P.activePet].bonus.atk)atk=Math.floor(atk*(1+P.pets[P.activePet].bonus.atk));
+  return atk;
+}
+function getPlayerDef(){
+  var def=P.baseDef;
+  for(var s in P.equipment){var it=P.equipment[s];if(it)def+=(it.stats.def||0);}
+  if(P.activePet!==null&&P.pets[P.activePet]&&P.pets[P.activePet].bonus.def)def=Math.floor(def*(1+P.pets[P.activePet].bonus.def));
+  return def;
+}
+function getPlayerCrit(){
+  var crit=0.05;
+  for(var s in P.equipment){var it=P.equipment[s];if(it&&it.stats.crit)crit+=it.stats.crit;}
+  if(P.activePet!==null&&P.pets[P.activePet]&&P.pets[P.activePet].bonus.crit)crit+=P.pets[P.activePet].bonus.crit;
+  return Math.min(crit,0.8);
+}
+
+function doOneBattle(){
+  if(!currentMonster)currentMonster=getMonster(P.currentMap);
+  var m=currentMonster;
+  var mInfo=document.getElementById('monsterInfo');
+  mInfo.style.display='block';
+  document.getElementById('mName').textContent=m.name+' Lv.'+m.level;
+  document.getElementById('mHpBar').style.width=(m.hp/m.maxHp*100)+'%';
+  document.getElementById('mHpText').textContent=m.hp+'/'+m.maxHp;
+  var pAtk=getPlayerAtk();var pCrit=getPlayerCrit();
+  var isCrit=Math.random()<pCrit;
+  var dmg=Math.max(1,Math.floor(pAtk*(isCrit?1.8:1)*(0.9+Math.random()*0.2)));
+  m.hp-=dmg;
+  addLog('⚔️ 你攻击 '+m.name+(isCrit?' <span style="color:#ffd700">暴击！</span>':'')+' 造成 <span class="log-dmg">'+dmg+'</span> 点伤害','dmg');
+  if(m.hp<=0){
+    monsterDefeated(m);
+    currentMonster=getMonster(P.currentMap);m=currentMonster;
+    document.getElementById('mName').textContent=m.name+' Lv.'+m.level;
+    document.getElementById('mHpBar').style.width='100%';
+    document.getElementById('mHpText').textContent=m.hp+'/'+m.maxHp;
+    return;
+  }
+  var pDef=getPlayerDef();
+  var mDmg=Math.max(1,Math.floor(m.atk*(0.9+Math.random()*0.2)-pDef*(0.8+Math.random()*0.2)));
+  P.hp-=mDmg;
+  addLog('💥 '+m.name+' 攻击你造成 <span class="log-dmg">'+mDmg+'</span> 点伤害','dmg');
+  document.getElementById('mHpBar').style.width=Math.max(0,m.hp/m.maxHp*100)+'%';
+  document.getElementById('mHpText').textContent=Math.max(0,m.hp)+'/'+m.maxHp;
+  if(P.hp<=0){
+    P.hp=0;stopBattle();
+    addLog('💀 你被 '+m.name+' 击败了！请恢复后再战。','dead');
+    var lostGold=Math.floor(P.gold*0.05);P.gold-=lostGold;
+    if(lostGold>0)addLog('💰 损失了 '+lostGold+' 金币','gold');
+    setTimeout(function(){P.hp=Math.floor(P.maxHp*0.5);updateTopBar();addLog('💊 你恢复了部分生命','heal');},2000);
+  }
+  updateTopBar();
+}
+
+function monsterDefeated(m){
+  var xpGain=m.xp;
+  if(P.activePet!==null&&P.pets[P.activePet]&&P.pets[P.activePet].bonus.xp)xpGain=Math.floor(xpGain*(1+P.pets[P.activePet].bonus.xp));
+  P.xp+=xpGain;P.score+=Math.floor(m.xp/5);
+  addLog('🎉 击败 '+m.name+' Lv.'+m.level+'！获得 <span class="log-xp">'+xpGain+' 经验</span>','xp');
+  while(P.xp>=xpNeeded(P.level)&&P.level<200){
+    P.xp-=xpNeeded(P.level);P.level++;
+    P.baseAtk=baseAtk(P.level);P.baseDef=baseDef(P.level);P.maxHp=baseHp(P.level);P.hp=P.maxHp;
+    addLog('🎊 <span style="color:#ffd700">升级！达到 Lv.'+P.level+'</span> 攻击+2 防御+1 生命满','xp');
+  }
+  var goldGain=m.gold[0]+Math.floor(Math.random()*(m.gold[1]-m.gold[0]+1));
+  if(P.activePet!==null&&P.pets[P.activePet]&&P.pets[P.activePet].bonus.gold)goldGain=Math.floor(goldGain*(1+P.pets[P.activePet].bonus.gold));
+  P.gold+=goldGain;
+  addLog('💰 获得 <span class="log-gold">'+goldGain+' 金币</span>','gold');
+  if(Math.random()<m.dropRate){
+    var quality=rollQuality(m.level*0.01);
+    var item=genEquipment(m.level,quality);
+    if(P.inventory.length<30){
+      P.inventory.push(item);
+      addLog('🎁 获得装备: <span class="q-'+quality+'">'+item.name+'</span> ['+QUALITY_MAP[quality].name+']','item');
+    }else{var p=sellPrice(item);P.gold+=p;addLog('🎒 背包已满，自动出售 '+item.name+' 获得 '+p+' 金币','gold');}
+  }
+  if(Math.random()<m.matDrop){
+    var map=MAPS[m.mapId];var mat=map.mats[Math.floor(Math.random()*map.mats.length)];
+    if(!P.materials[mat])P.materials[mat]=0;P.materials[mat]++;
+    addLog('📦 获得材料: '+mat+' x1','item');
+  }
+  if(Math.random()<0.005*m.dropRate){
+    var petQ=rollQuality(m.level*0.005);
+    if(qualityIndex(petQ)>=1&&P.pets.length<4){
+      var pet=genPet(petQ,m.level);P.pets.push(pet);
+      addLog('🐾 获得宠物: <span class="q-'+petQ+'">'+pet.icon+' '+pet.name+'</span>！','item');
+    }
+  }
+  renderInv();renderPets();
+}
+
+function startBattle(){
+  if(P.hp<=0){addLog('💀 生命值为0，请等待恢复','dead');return;}
+  P.battling=true;
+  document.getElementById('btnStart').style.display='none';
+  document.getElementById('btnStop').style.display='';
+  if(!currentMonster)currentMonster=getMonster(P.currentMap);
+  var m=currentMonster;
+  document.getElementById('monsterInfo').style.display='block';
+  document.getElementById('mName').textContent=m.name+' Lv.'+m.level;
+  document.getElementById('mHpBar').style.width=(m.hp/m.maxHp*100)+'%';
+  document.getElementById('mHpText').textContent=m.hp+'/'+m.maxHp;
+  addLog('⚔️ 开始在 '+MAPS[P.currentMap].name+' 挂机刷怪...','info');
+  battleTimer=setInterval(doOneBattle,2000);
+}
+
+function stopBattle(){
+  P.battling=false;
+  if(battleTimer){clearInterval(battleTimer);battleTimer=null;}
+  document.getElementById('btnStart').style.display='';
+  document.getElementById('btnStop').style.display='none';
+  addLog('⏹ 停止挂机','info');
+  saveGame();
+}
+
+function renderMaps(){
+  var h='';
+  MAPS.forEach(function(m,i){
+    var active=P.currentMap===i;
+    h+='<button class="map-btn'+(active?' active':'')+'" onclick="selectMap('+i+')">';
+    h+='<span>'+m.desc+'</span>';
+    h+='<span class="map-lv" style="color:'+m.color+'">'+m.name+' Lv.'+m.lvRange[0]+'-'+m.lvRange[1]+'</span>';
+    h+='</button>';
+  });
+  document.getElementById('mapSelector').innerHTML=h;
+}
+
+function selectMap(i){
+  if(P.battling)stopBattle();
+  P.currentMap=i;currentMonster=null;
+  renderMaps();
+  document.getElementById('monsterInfo').style.display='none';
+  addLog('📍 移动到 '+MAPS[i].name,'info');
+}
+
+// ============================================================
+//  CHEST SYSTEM
+// ============================================================
+
+var CHESTS=[
+  {id:'iron',name:'铁箱',cost:100,icon:'📦',desc:'普通品质为主',
+    qualityWeights:{common:0.60,uncommon:0.30,rare:0.08,epic:0.018,legendary:0.002,mythic:0}},
+  {id:'silver',name:'银箱',cost:500,icon:'🗳️',desc:'优秀品质为主',
+    qualityWeights:{common:0.30,uncommon:0.40,rare:0.20,epic:0.08,legendary:0.018,mythic:0.002}},
+  {id:'gold',name:'金箱',cost:2000,icon:'🏆',desc:'稀有品质为主',
+    qualityWeights:{common:0.10,uncommon:0.20,rare:0.35,epic:0.25,legendary:0.08,mythic:0.02}},
+  {id:'diamond',name:'钻石箱',cost:10000,icon:'💎',desc:'史诗品质为主，有概率出宠物',
+    qualityWeights:{common:0.02,uncommon:0.08,rare:0.25,epic:0.35,legendary:0.22,mythic:0.08}}
+];
+
+function rollChestQuality(chest){
+  var r=Math.random();var cum=0;
+  var keys=['common','uncommon','rare','epic','legendary','mythic'];
+  for(var i=keys.length-1;i>=0;i--){
+    cum+=chest.qualityWeights[keys[i]];
+    if(r<cum)return keys[i];
+  }
+  return 'common';
+}
+
+function openChest(chestIndex){
+  var chest=CHESTS[chestIndex];
+  if(P.gold<chest.cost){
+    addLog('💰 金币不足！需要 '+chest.cost+' 金币','info');
+    return;
+  }
+  if(P.inventory.length>=30){
+    addLog('🎒 背包已满，请先清理','info');
+    return;
+  }
+  P.gold-=chest.cost;
+  var quality=rollChestQuality(chest);
+  var item=genEquipment(Math.max(1,P.level+Math.floor(Math.random()*10)-5),quality);
+  P.inventory.push(item);
+  var q=QUALITY_MAP[quality];
+  addLog(chest.icon+' 打开 '+chest.name+' → <span class="q-'+quality+'">'+item.name+'</span> ['+q.name+']','item');
+
+  // Diamond chest: small chance for pet
+  if(chest.id==='diamond'&&Math.random()<0.15&&P.pets.length<4){
+    var petQ=rollQuality(0.3);
+    if(qualityIndex(petQ)>=2){// at least rare
+      var pet=genPet(petQ,P.level);
+      P.pets.push(pet);
+      addLog('🐾 获得宠物: <span class="q-'+petQ+'">'+pet.icon+' '+pet.name+'</span>！','item');
+    }
+  }
+
+  updateTopBar();renderInv();renderChests();renderPets();
+}
+
+function renderChests(){
+  var h='';
+  CHESTS.forEach(function(c,i){
+    var canOpen=P.gold>=c.cost&&P.inventory.length<30;
+    h+='<button class="chest-btn"'+(canOpen?'':' disabled')+' onclick="openChest('+i+')">';
+    h+='<span>'+c.icon+' '+c.name+' <span style="color:#888;font-size:0.7rem">'+c.desc+'</span></span>';
+    h+='<span>💰'+c.cost+'</span>';
+    h+='</button>';
+  });
+  // Show materials summary
+  var matKeys=Object.keys(P.materials);
+  if(matKeys.length>0){
+    h+='<div style="margin-top:8px;font-size:0.75rem;color:#888">📦 材料: ';
+    matKeys.forEach(function(k){if(P.materials[k]>0)h+=k+'×'+P.materials[k]+' ';});
+    h+='</div>';
+  }
+  document.getElementById('chestPanel').innerHTML=h;
+}
+
+// ============================================================
+//  EQUIPMENT ENHANCEMENT SYSTEM
+// ============================================================
+
+var ENHANCE_RATES=[1.0,0.95,0.85,0.75,0.60,0.45,0.30,0.18,0.10,0.05]; // +0 to +9 success rate
+var ENHANCE_COSTS=[0,50,100,200,400,800,1500,3000,6000,12000]; // gold cost per level
+
+function getSelectedInvItem(){
+  // Track which inventory item is selected for enhancement
+  return P._enhSelected!==undefined?P._enhSelected:-1;
+}
+
+function selectForEnhance(invIndex){
+  P._enhSelected=invIndex;
+  renderEnhancePanel();
+}
+
+function enhanceItem(){
+  var idx=getSelectedInvItem();
+  if(idx<0||idx>=P.inventory.length){addLog('请先选择要强化的装备','info');return;}
+  var item=P.inventory[idx];
+  if(item.enhance>=10){addLog('该装备已达到最高强化等级','info');return;}
+  var lv=item.enhance;
+  var goldCost=ENHANCE_COSTS[lv+1]||99999;
+  // Need materials too
+  var matCost=Math.ceil((lv+1)*2);
+  var matName='强化石';
+  // Check materials
+  if(!P.materials[matName])P.materials[matName]=0;
+  if(P.gold<goldCost){addLog('💰 金币不足，需要 '+goldCost+' 金币','info');return;}
+  if(P.materials[matName]<matCost){addLog('📦 强化石不足，需要 '+matCost+' 个（当前 '+P.materials[matName]+'）','info');return;}
+
+  P.gold-=goldCost;
+  P.materials[matName]-=matCost;
+  var rate=ENHANCE_RATES[lv];
+  var success=Math.random()<rate;
+  if(success){
+    item.enhance++;
+    // Boost stats by 10% per enhance level
+    var boost=0.10;
+    for(var k in item.stats){
+      if(k==='crit')item.stats[k]=parseFloat((item.stats[k]*(1+boost)).toFixed(3));
+      else item.stats[k]=Math.floor(item.stats[k]*(1+boost));
+    }
+    addLog('🔨 <span style="color:#0f0">强化成功！</span> '+item.name+'+'+item.enhance+' (成功率 '+Math.round(rate*100)+'%)','item');
+  }else{
+    if(item.enhance>0){
+      item.enhance--;
+      addLog('🔨 <span style="color:#ff6b6b">强化失败...</span> '+item.name+' 降为 +'+item.enhance+' (成功率 '+Math.round(rate*100)+'%)','dmg');
+    }else{
+      addLog('🔨 <span style="color:#ff6b6b">强化失败</span> (成功率 '+Math.round(rate*100)+'%)，等级不变','dmg');
+    }
+  }
+  updateTopBar();renderInv();renderEnhancePanel();
+}
+
+function reforgeItem(){
+  var idx=getSelectedInvItem();
+  if(idx<0||idx>=P.inventory.length){addLog('请先选择要重铸的装备','info');return;}
+  var item=P.inventory[idx];
+  var goldCost=200+item.level*10+qualityIndex(item.quality)*100;
+  var matCost=3;
+  var matName='重铸石';
+  if(!P.materials[matName])P.materials[matName]=0;
+  if(P.gold<goldCost){addLog('💰 金币不足，需要 '+goldCost+' 金币','info');return;}
+  if(P.materials[matName]<matCost){addLog('📦 重铸石不足，需要 '+matCost+' 个（当前 '+P.materials[matName]+'）','info');return;}
+
+  P.gold-=goldCost;
+  P.materials[matName]-=matCost;
+
+  // Reroll stats within same quality/level range
+  var base=SLOT_BASES[item.slot];
+  var qIdx=qualityIndex(item.quality);
+  var mult=QUALITY_STAT_MULT[qIdx];
+  var lvMult=1+item.level*0.08;
+  var enhMult=Math.pow(1.1,item.enhance);
+  if(base.atk){item.stats.atk=Math.max(1,Math.floor(base.atk*mult*lvMult*enhMult*(0.85+Math.random()*0.3)));}
+  if(base.def){item.stats.def=Math.max(1,Math.floor(base.def*mult*lvMult*enhMult*(0.85+Math.random()*0.3)));}
+  if(base.hp){item.stats.hp=Math.max(5,Math.floor(base.hp*mult*lvMult*enhMult*(0.85+Math.random()*0.3)));}
+  if(base.crit){item.stats.crit=parseFloat((base.crit*mult*enhMult*(0.7+Math.random()*0.6)).toFixed(3));}
+
+  addLog('🔄 重铸成功！'+item.name+' 属性已重新随机','item');
+  updateTopBar();renderInv();renderEnhancePanel();
+}
+
+function sellSelected(){
+  var idx=getSelectedInvItem();
+  if(idx<0||idx>=P.inventory.length)return;
+  sellItem(idx);
+  P._enhSelected=-1;
+  renderEnhancePanel();
+}
+
+function renderEnhancePanel(){
+  var idx=getSelectedInvItem();
+  var h='';
+  if(idx<0||idx>=P.inventory.length){
+    h='<div style="color:#888">← 点击背包中的装备选中，然后在此强化/重铸</div>';
+  }else{
+    var item=P.inventory[idx];
+    var q=QUALITY_MAP[item.quality];
+    h+='<div style="margin-bottom:8px"><span class="q-'+item.quality+'">'+item.name+(item.enhance>0?'+'+item.enhance:'')+'</span> <span style="color:#888">['+q.name+' '+item.slotName+']</span></div>';
+    h+='<div style="font-size:0.75rem;color:#aaa;margin-bottom:6px">';
+    if(item.stats.atk)h+='⚔️攻击+'+item.stats.atk+' ';
+    if(item.stats.def)h+='🛡️防御+'+item.stats.def+' ';
+    if(item.stats.hp)h+='❤️生命+'+item.stats.hp+' ';
+    if(item.stats.crit)h+='💥暴击+'+Math.round(item.stats.crit*100)+'% ';
+    h+='</div>';
+    if(item.enhance<10){
+      var lv=item.enhance;
+      var rate=Math.round(ENHANCE_RATES[lv]*100);
+      var gCost=ENHANCE_COSTS[lv+1]||99999;
+      var mCost=Math.ceil((lv+1)*2);
+      var matHave=P.materials['强化石']||0;
+      h+='<button class="btn" style="font-size:0.8rem;padding:4px 12px;margin-right:6px" onclick="enhanceItem()">🔨 强化+'+(lv+1)+' ('+rate+'% 成功率, 💰'+gCost+', 📦强化石×'+mCost+')</button>';
+    }else{
+      h+='<div style="color:#ffd700">✨ 已达到最高强化等级 +10</div>';
+    }
+    var reforgeGold=200+item.level*10+qualityIndex(item.quality)*100;
+    h+='<button class="btn" style="font-size:0.8rem;padding:4px 12px;margin-right:6px;margin-top:4px" onclick="reforgeItem()">🔄 重铸 (💰'+reforgeGold+', 📦重铸石×3)</button>';
+    h+='<button class="btn btn-stop" style="font-size:0.8rem;padding:4px 12px;margin-top:4px" onclick="sellSelected()">💰 出售 (+'+sellPrice(item)+'金币)</button>';
+  }
+  document.getElementById('enhancePanel').innerHTML=h;
+}
+
+// Click inventory item to select for enhancement
+var origRenderInv=renderInv;
+renderInv=function(){
+  origRenderInv();
+  // Add click handlers for selection
+  var items=document.querySelectorAll('#invList .inv-item');
+  items.forEach(function(el,i){
+    el.addEventListener('click',function(e){
+      if(e.target.tagName==='BUTTON')return; // don't interfere with equip/sell buttons
+      selectForEnhance(i);
+    });
+    if(getSelectedInvItem()===i)el.style.background='rgba(0,255,0,0.12)';
+  });
+};
+
+// Enhance stone drops from all monsters (10% chance)
+var origMonsterDefeated=monsterDefeated;
+monsterDefeated=function(m){
+  origMonsterDefeated(m);
+  if(Math.random()<0.10){
+    if(!P.materials['强化石'])P.materials['强化石']=0;
+    P.materials['强化石']++;
+    addLog('📦 获得材料: 强化石 x1','item');
+  }
+  if(Math.random()<0.05){
+    if(!P.materials['重铸石'])P.materials['重铸石']=0;
+    P.materials['重铸石']++;
+    addLog('📦 获得材料: 重铸石 x1','item');
+  }
+};
+function addLog(msg,type){var el=document.getElementById('battleLog');var d=document.createElement('div');d.className='log-'+(type||'info');d.innerHTML=msg;el.appendChild(d);el.scrollTop=el.scrollHeight;if(el.children.length>50)el.removeChild(el.firstChild);}
+
+// Leaderboard
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function renderLB(p){
-  var s=[];for(var n in p)s.push({name:n,score:p[n].best||0});
+  var s=[];for(var n in p)s.push({name:n,score:p[n].best||0,level:p[n].level||1});
   s.sort(function(a,b){return b.score-a.score;});s=s.slice(0,20);
-  var l=document.getElementById('lb');
-  if(!s.length){l.innerHTML='<li style="justify-content:center;color:#666">还没有记录，来一局吧！</li>';return;}
   var h='';var medals=['🥇','🥈','🥉'];
   for(var i=0;i<s.length;i++){
     var r=i<3?medals[i]:''+(i+1);
-    var hl=s[i].name===nk?' style="background:rgba(0,255,0,0.08)"':'';
-    h+='<li'+hl+'><span class="lb-rank">'+r+'</span><span class="lb-name">'+esc(s[i].name)+'</span><span class="lb-score">'+s[i].score+'</span></li>';
+    h+='<li><span class="lb-rank">'+r+'</span><span class="lb-name">'+esc(s[i].name)+'</span><span class="lb-score">'+s[i].score+'</span></li>';
   }
-  l.innerHTML=h;
-  if(document.getElementById('overlayLB').style.display!=='none'){
-    document.getElementById('overlayLBList').innerHTML=h;
-  }
+  if(!s.length)h='<li style="justify-content:center;color:#666">还没有记录</li>';
+  var lb1=document.getElementById('lb');
+  var lb2=document.getElementById('lb2');
+  if(lb1)lb1.innerHTML=h;
+  if(lb2)lb2.innerHTML=h;
 }
-
 function fetchScores(){
-  var x=new XMLHttpRequest();
-  x.open('GET',AU+'/latest',true);
-  x.setRequestHeader('X-Master-Key',AK);
+  var x=new XMLHttpRequest();x.open('GET',AU+'/latest',true);x.setRequestHeader('X-Master-Key',AK);
   x.onload=function(){
-    if(x.status===200){
-      try{var d=JSON.parse(x.responseText);renderLB(d.record.adv_players||{});lbOK();}catch(e){lbErr('数据解析失败');}
-    }else lbErr('HTTP '+x.status);
+    if(x.status===200)try{var d=JSON.parse(x.responseText);renderLB(d.record.adv_players||{});
+      document.getElementById('ls2').textContent='✅ 已同步';document.getElementById('ls2').className='lb-status online';}catch(e){}
   };
-  x.onerror=function(){lbErr('网络错误');};
+  x.onerror=function(){};
   x.send();
 }
+// Auto HP regen when not battling (5% per 3 seconds)
+setInterval(function(){
+  if(P.name&&!P.battling&&P.hp<P.maxHp&&P.hp>0){
+    P.hp=Math.min(P.maxHp,P.hp+Math.ceil(P.maxHp*0.05));
+    updateTopBar();
+  }
+},3000);
 
-function submitScore(name,ns){
-  document.getElementById('ls').textContent='⏳ 提交中...';
+fetchScores();
+
+function submitScore(){
+  if(!P.name||P.score<=0)return;
   var g=new XMLHttpRequest();
-  g.open('GET',AU+'/latest',true);
-  g.setRequestHeader('X-Master-Key',AK);
+  g.open('GET',AU+'/latest',true);g.setRequestHeader('X-Master-Key',AK);
   g.onload=function(){
-    if(g.status!==200){lbErr('HTTP '+g.status);return;}
+    if(g.status!==200)return;
     try{
       var d=JSON.parse(g.responseText);var scores=d.record;if(!scores.adv_players)scores.adv_players={};
-      var ex=scores.adv_players[name];var ib=!ex||ns>(ex.best||0);
-      scores.adv_players[name]={best:ib?ns:(ex.best||0),games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};
+      var ex=scores.adv_players[P.name];var ib=!ex||P.score>(ex.best||0);
+      scores.adv_players[P.name]={best:ib?P.score:(ex.best||0),level:P.level,games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};
       var p=new XMLHttpRequest();
-      p.open('PUT',AU,true);
-      p.setRequestHeader('X-Master-Key',AK);
-      p.setRequestHeader('Content-Type','application/json');
-      p.onload=function(){if(p.status===200){renderLB(scores.adv_players);lbOK();}else lbErr('提交失败 '+p.status);};
-      p.onerror=function(){lbErr('提交网络错误');};
+      p.open('PUT',AU,true);p.setRequestHeader('X-Master-Key',AK);p.setRequestHeader('Content-Type','application/json');
+      p.onload=function(){if(p.status===200){renderLB(scores.adv_players);}};
       p.send(JSON.stringify(scores));
-    }catch(e){lbErr('提交异常');}
+    }catch(e){}
   };
-  g.onerror=function(){lbErr('网络错误');};
   g.send();
 }
 
-fetchScores();setInterval(fetchScores,RI);
+// Submit score periodically and on save
+setInterval(function(){if(P.name)submitScore();},60000);
+var origSaveGame=saveGame;
+saveGame=function(){origSaveGame();submitScore();};
+
+// Init display
+updateTopBar();
 </script>
 </body>
 </html>
