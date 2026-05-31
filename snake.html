@@ -26,7 +26,7 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
 .lb-list li:nth-child(3){color:#cd7f32}
 .lb-rank{width:28px;text-align:center}
 .lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px}
-.lb-score{font-weight:bold;color:#0f0;min-width:32px;text-align:right}
+.lb-score{font-weight:bold;color:#0f0;min-width:40px;text-align:right}
 .lb-status{text-align:center;font-size:0.75rem;color:#666;margin-top:8px}
 .lb-status.online{color:#0f0}
 .controls{display:none;margin-top:12px;gap:4px}
@@ -66,11 +66,11 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
 <div class="header">
   <h1>🐍 贪吃蛇</h1>
   <div class="score-bar">
-    得分: <span id="score">0</span>
+    得分: <span id="score">0.0</span>
     &nbsp;|&nbsp;
     倍率: <span id="mult" class="multiplier">x1.0</span>
     &nbsp;|&nbsp;
-    最高: <span id="best">0</span>
+    最高: <span id="best">0.0</span>
   </div>
 </div>
 
@@ -103,7 +103,7 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
     <button class="speed-btn" data-speed="fast">🚀 快速</button>
     <button class="speed-btn" data-speed="insane">⚡ 极速</button>
   </div>
-  <div class="speed-info" id="speedInfo">基础倍率 x1.5 · 每吃一个 +0.2</div>
+  <div class="speed-info" id="speedInfo">得分倍率 x1.0 · 每个食物 1.0 分</div>
   <button onclick="startGame()">开始游戏</button>
   <div class="sub">方向键 / WASD / 滑动 / 按钮控制</div>
   <button class="show-lb-btn" onclick="toggleOverlayLB()">🏆 查看排行榜</button>
@@ -114,13 +114,13 @@ canvas{border:2px solid #0f0;border-radius:4px;box-shadow:0 0 20px rgba(0,255,0,
 
 <div class="overlay" id="gameOverScreen" style="display:none">
   <h2>💀 游戏结束</h2>
-  <p>得分: <span id="finalScore">0</span></p>
+  <p>得分: <span id="finalScore">0.0</span></p>
   <div class="rank-info" id="rankInfo"></div>
   <button onclick="startGame()">再来一局</button>
 </div>
 
 <script>
-const API_KEY = '$2a$10$JDS9gl1LtJJ1GfLQy013YOEMq8xzl5QLHxoKGghwH7uIRxVbZQZNi';
+const API_KEY = '***';
 const BIN_ID = '6a1b0396ddf5aa59f778b27f';
 const API_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
 const REFRESH_INTERVAL = 30000;
@@ -131,22 +131,23 @@ const GRID = 20;
 const COLS = canvas.width / GRID;
 const ROWS = canvas.height / GRID;
 
-// Speed configurations: { interval, baseMultiplier, label }
+// Speed configs: fixed multiplier per speed tier, +0.2 each tier
+// slow=0.8, normal=1.0, fast=1.2, insane=1.4
 const SPEEDS = {
-  slow:   { interval: 150, baseMult: 1.0, label: '🐢 慢速',  info: '基础倍率 x1.0 · 每吃一个 +0.2' },
-  normal: { interval: 110, baseMult: 1.5, label: '🏃 普通',  info: '基础倍率 x1.5 · 每吃一个 +0.2' },
-  fast:   { interval: 75,  baseMult: 2.5, label: '🚀 快速',  info: '基础倍率 x2.5 · 每吃一个 +0.2' },
-  insane: { interval: 50,  baseMult: 4.0, label: '⚡ 极速',  info: '基础倍率 x4.0 · 每吃一个 +0.2' },
+  slow:   { interval: 200, mult: 0.8, label: '🐢 慢速',  info: '得分倍率 x0.8 · 每个食物 0.8 分' },
+  normal: { interval: 150, mult: 1.0, label: '🏃 普通',  info: '得分倍率 x1.0 · 每个食物 1.0 分' },
+  fast:   { interval: 100, mult: 1.2, label: '🚀 快速',  info: '得分倍率 x1.2 · 每个食物 1.2 分' },
+  insane: { interval: 50,  mult: 1.4, label: '⚡ 极速',  info: '得分倍率 x1.4 · 每个食物 1.4 分' },
 };
 
 let selectedSpeed = 'normal';
 let snake, dir, nextDir, food, score, speed, loop, alive;
-let currentMult, foodEaten;
+let scoreMult;
 let nickname = localStorage.getItem('snake_nick') || '';
-let localBest = parseInt(localStorage.getItem('snake_best') || '0');
+let localBest = parseFloat(localStorage.getItem('snake_best') || '0');
 const nickInput = document.getElementById('nicknameInput');
 if (nickname) nickInput.value = nickname;
-document.getElementById('best').textContent = localBest;
+document.getElementById('best').textContent = localBest.toFixed(1);
 
 // Speed selection UI
 const speedBtns = document.querySelectorAll('.speed-btn');
@@ -162,14 +163,14 @@ speedBtns.forEach(btn => {
 function init(){
   snake=[{x:Math.floor(COLS/2),y:Math.floor(ROWS/2)}];
   dir={x:1,y:0};nextDir={x:1,y:0};
-  score=0;foodEaten=0;
+  score=0;
   const cfg = SPEEDS[selectedSpeed];
   speed = cfg.interval;
-  currentMult = cfg.baseMult;
+  scoreMult = cfg.mult;
   alive=true;
   placeFood();
-  document.getElementById('score').textContent=0;
-  document.getElementById('mult').textContent='x'+currentMult.toFixed(1);
+  document.getElementById('score').textContent='0.0';
+  document.getElementById('mult').textContent='x'+scoreMult.toFixed(1);
 }
 
 function placeFood(){let p;do{p={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));food=p;}
@@ -194,17 +195,9 @@ function update(){
   if(snake.some(s=>s.x===head.x&&s.y===head.y))return die();
   snake.unshift(head);
   if(head.x===food.x&&head.y===food.y){
-    foodEaten++;
-    // Score: round up to integer, each food gives currentMult points
-    const pts = Math.ceil(currentMult);
-    score += pts;
-    // Increase multiplier by 0.2 after each food
-    currentMult += 0.2;
-    document.getElementById('score').textContent=score;
-    document.getElementById('mult').textContent='x'+currentMult.toFixed(1);
+    score += scoreMult;
+    document.getElementById('score').textContent=score.toFixed(1);
     placeFood();
-    // Speed still increases slightly as you eat (optional subtle speedup)
-    if(speed>40){speed-=1;clearInterval(loop);loop=setInterval(tick,speed);}
   }else snake.pop();
 }
 
@@ -212,10 +205,10 @@ function tick(){update();draw();}
 
 function die(){
   alive=false;clearInterval(loop);
-  document.getElementById('finalScore').textContent=score;
+  document.getElementById('finalScore').textContent=score.toFixed(1);
   document.getElementById('gameOverScreen').style.display='flex';
-  if(score>localBest){localBest=score;localStorage.setItem('snake_best',localBest);}
-  document.getElementById('best').textContent=localBest;
+  if(score>localBest){localBest=score;localStorage.setItem('snake_best',localBest.toFixed(1));}
+  document.getElementById('best').textContent=localBest.toFixed(1);
   if(nickname&&score>0)submitScore(nickname,score);
 }
 
@@ -231,7 +224,6 @@ function toggleOverlayLB(){
   const lb=document.getElementById('overlayLB');
   if(lb.style.display==='none'){
     lb.style.display='block';
-    // Copy leaderboard content
     document.getElementById('overlayLBList').innerHTML=document.getElementById('lbList').innerHTML;
   }else{
     lb.style.display='none';
@@ -269,9 +261,9 @@ function renderLB(p){
   l.innerHTML=s.map((p,i)=>{
     const m=['🥇','🥈','🥉'];const r=i<3?m[i]:`${i+1}`;
     const h=p.name===nickname?' style="background:rgba(0,255,0,0.08)"':'';
-    return`<li${h}><span class="lb-rank">${r}</span><span class="lb-name">${esc(p.name)}</span><span class="lb-score">${p.score}</span></li>`;
+    const displayScore = typeof p.score === 'number' ? p.score.toFixed(1) : p.score;
+    return`<li${h}><span class="lb-rank">${r}</span><span class="lb-name">${esc(p.name)}</span><span class="lb-score">${displayScore}</span></li>`;
   }).join('');
-  // Also update overlay LB if visible
   if(document.getElementById('overlayLB').style.display!=='none'){
     document.getElementById('overlayLBList').innerHTML=l.innerHTML;
   }
@@ -283,10 +275,10 @@ async function submitScore(name,ns){
     const gd=await gr.json();const scores=gd.record;
     if(!scores.players)scores.players={};
     const ex=scores.players[name];const ib=!ex||ns>(ex.best||0);
-    scores.players[name]={best:ib?ns:(ex.best||0),games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};
+    scores.players[name]={best:ib?parseFloat(ns.toFixed(1)):(ex.best||0),games:((ex&&ex.games)||0)+1,lastPlayed:Date.now()};
     const all=Object.values(scores.players).map(p=>p.best).sort((a,b)=>b-a);
     const rank=all.indexOf(scores.players[name].best)+1;
-    document.getElementById('rankInfo').textContent=ib?`🎉 新纪录！排名第 ${rank}`:`当前排名第 ${rank}（历史最高 ${scores.players[name].best}）`;
+    document.getElementById('rankInfo').textContent=ib?`🎉 新纪录！排名第 ${rank}`:`当前排名第 ${rank}（历史最高 ${Number(scores.players[name].best).toFixed(1)}）`;
     await fetch(API_URL,{method:'PUT',headers:{'X-Master-Key':API_KEY,'Content-Type':'application/json'},body:JSON.stringify(scores)});
     renderLB(scores.players);
     document.getElementById('lbStatus').textContent=`✅ 已提交 · ${new Date().toLocaleTimeString()}`;
