@@ -173,6 +173,7 @@ a{color:#0f0;text-decoration:none}
 <div class="top-bar">
   <a class="back-link" href="index.html">← 返回</a>
   <div class="player-info">
+    <span id="dUser" style="color:#0f0;cursor:pointer" onclick="doLogout()" title="点击登出"></span>
     <span class="lv" id="dLv">Lv.1</span>
     <span class="hp-bar"><span class="bar-bg"><span class="bar-fill" id="dHpBar" style="width:100%"></span></span><span class="hp-val" id="dHp">100/100</span></span>
     <span class="gold">💰 <span id="dGold">0</span></span>
@@ -231,14 +232,23 @@ a{color:#0f0;text-decoration:none}
   <button onclick="switchTab('right')">🐾 宠物</button>
 </div>
 
-<!-- Start Screen -->
+<!-- Start Screen: Login / Register -->
 <div class="overlay" id="startScreen">
   <h2>🗡️ 文字冒险 RPG</h2>
-  <p>输入你的冒险者名号</p>
-  <input type="text" id="ni" placeholder="你的昵称" maxlength="12" autocomplete="off">
-  <br><button onclick="startGame()">开始冒险</button>
-  <div class="sub">挂机刷怪 · 收集装备 · 强化升级</div>
-  <button class="show-lb-btn" onclick="toggleOverlayLB()">🏆 查看排行榜</button>
+  <div id="authBox" style="width:280px">
+    <div id="loginForm">
+      <p style="margin-bottom:10px">登录你的账号</p>
+      <input type="text" id="authUser" placeholder="用户名" maxlength="16" autocomplete="username" style="width:100%;margin-bottom:8px">
+      <input type="password" id="authPass" placeholder="密码" maxlength="32" autocomplete="current-password" style="width:100%;margin-bottom:12px">
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px">
+        <button onclick="doLogin()" style="flex:1">登录</button>
+        <button onclick="doRegister()" style="flex:1;border-color:rgba(0,255,0,0.4);color:rgba(0,255,0,0.7)">注册</button>
+      </div>
+      <div id="authMsg" style="font-size:0.8rem;color:#ff6b6b;min-height:18px;text-align:center"></div>
+      <div class="sub">注册后存档自动保存到云端，换设备也能恢复</div>
+    </div>
+  </div>
+  <button class="show-lb-btn" onclick="toggleOverlayLB()" style="margin-top:16px">🏆 查看排行榜</button>
   <div class="overlay-lb" id="overlayLB" style="display:none">
     <ul class="lb-list" id="overlayLBList"><li style="justify-content:center;color:#666">加载中...</li></ul>
   </div>
@@ -518,6 +528,133 @@ function sellPrice(it){
 }
 
 // ============================================================
+//  AUTH SYSTEM (Register / Login / Session)
+// ============================================================
+
+var currentUser=null; // logged in username
+
+function sha256(str){
+  var buf=new TextEncoder().encode(str);
+  return crypto.subtle.digest('SHA-256',buf).then(function(hash){
+    return Array.from(new Uint8Array(hash)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  });
+}
+
+function setAuthMsg(msg,color){
+  var el=document.getElementById('authMsg');
+  el.textContent=msg;el.style.color=color||'#ff6b6b';
+}
+
+function doRegister(){
+  var user=document.getElementById('authUser').value.trim();
+  var pass=document.getElementById('authPass').value;
+  if(!user||!pass){setAuthMsg('请输入用户名和密码');return;}
+  if(user.length<2||user.length>16){setAuthMsg('用户名2-16个字符');return;}
+  if(pass.length<4){setAuthMsg('密码至少4位');return;}
+  setAuthMsg('注册中...','#888');
+  sha256(pass).then(function(hash){
+    // Check if user exists
+    var x=new XMLHttpRequest();
+    x.open('GET',AU+'/latest',true);x.setRequestHeader('X-Master-Key',AK);
+    x.onload=function(){
+      if(x.status!==200){setAuthMsg('网络错误');return;}
+      try{
+        var d=JSON.parse(x.responseText);var record=d.record;
+        if(!record.users)record.users={};
+        if(record.users[user]){setAuthMsg('用户名已存在，请换一个');return;}
+        // Create user
+        record.users[user]={hash:hash,created:Date.now()};
+        var p=new XMLHttpRequest();
+        p.open('PUT',AU,true);p.setRequestHeader('X-Master-Key',AK);p.setRequestHeader('Content-Type','application/json');
+        p.onload=function(){
+          if(p.status===200){
+            currentUser=user;
+            localStorage.setItem('rpg_session',JSON.stringify({user:user,time:Date.now()}));
+            setAuthMsg('注册成功！','#0f0');
+            setTimeout(function(){enterGame();},500);
+          }else setAuthMsg('注册失败');
+        };
+        p.onerror=function(){setAuthMsg('网络错误');};
+        p.send(JSON.stringify(record));
+      }catch(e){setAuthMsg('网络错误');}
+    };
+    x.onerror=function(){setAuthMsg('网络错误');};
+    x.send();
+  });
+}
+
+function doLogin(){
+  var user=document.getElementById('authUser').value.trim();
+  var pass=document.getElementById('authPass').value;
+  if(!user||!pass){setAuthMsg('请输入用户名和密码');return;}
+  setAuthMsg('登录中...','#888');
+  sha256(pass).then(function(hash){
+    var x=new XMLHttpRequest();
+    x.open('GET',AU+'/latest',true);x.setRequestHeader('X-Master-Key',AK);
+    x.onload=function(){
+      if(x.status!==200){setAuthMsg('网络错误');return;}
+      try{
+        var d=JSON.parse(x.responseText);var users=(d.record&&d.record.users)||{};
+        if(!users[user]){setAuthMsg('用户不存在');return;}
+        if(users[user].hash!==hash){setAuthMsg('密码错误');return;}
+        currentUser=user;
+        localStorage.setItem('rpg_session',JSON.stringify({user:user,time:Date.now()}));
+        setAuthMsg('登录成功！','#0f0');
+        setTimeout(function(){enterGame();},300);
+      }catch(e){setAuthMsg('网络错误');}
+    };
+    x.onerror=function(){setAuthMsg('网络错误');};
+    x.send();
+  });
+}
+
+function enterGame(){
+  nickname=currentUser;
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('dUser').textContent='👤 '+nickname;
+  P=defaultPlayer();P.name=nickname;
+  P.maxHp=baseHp(P.level);P.hp=P.maxHp;
+  updateTopBar();renderEquipGrid();renderInv();renderPets();
+  renderMaps();renderChests();renderEnhancePanel();
+
+  // Try local save
+  if(loadGame()){
+    P.maxHp=baseHp(P.level);if(P.hp<=0)P.hp=P.maxHp;
+    updateTopBar();renderEquipGrid();renderInv();renderPets();
+    renderMaps();renderChests();renderEnhancePanel();
+    addLog('💾 已恢复本地存档','info');
+    // Check cloud for newer
+    loadFromCloud(function(ok){
+      if(ok){P.maxHp=baseHp(P.level);if(P.hp<=0)P.hp=P.maxHp;
+        updateTopBar();renderEquipGrid();renderInv();renderPets();
+        renderMaps();renderChests();renderEnhancePanel();}
+    });
+  }else{
+    addLog('🔍 正在从云端加载存档...','info');
+    loadFromCloud(function(ok){
+      if(!ok)addLog('🗡️ 欢迎新冒险者，'+nickname+'！','info');
+      P.maxHp=baseHp(P.level);if(P.hp<=0)P.hp=P.maxHp;
+      updateTopBar();renderEquipGrid();renderInv();renderPets();
+      renderMaps();renderChests();renderEnhancePanel();
+    });
+  }
+}
+
+// Auto-login from session
+function tryAutoLogin(){
+  try{
+    var s=JSON.parse(localStorage.getItem('rpg_session'));
+    if(s&&s.user&&Date.now()-s.time<7*24*3600*1000){// 7 day session
+      currentUser=s.user;
+      nickname=s.user;
+      enterGame();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+// ============================================================
 //  GAME SAVE / LOAD (Local + Cloud)
 // ============================================================
 
@@ -541,7 +678,7 @@ function saveGame(){
 }
 
 function saveToCloud(){
-  if(!P.name)return;
+  if(!currentUser)return;
   var saveData=buildSaveData();
   var g=new XMLHttpRequest();
   g.open('GET',AU+'/latest',true);g.setRequestHeader('X-Master-Key',AK);
@@ -550,7 +687,7 @@ function saveToCloud(){
     try{
       var d=JSON.parse(g.responseText);var record=d.record;
       if(!record.saves)record.saves={};
-      record.saves[P.name]=saveData;
+      record.saves[currentUser]=saveData;
       var p=new XMLHttpRequest();
       p.open('PUT',AU,true);p.setRequestHeader('X-Master-Key',AK);p.setRequestHeader('Content-Type','application/json');
       p.onload=function(){if(p.status===200)addLog('☁️ 云端存档已同步','info');};
@@ -608,44 +745,20 @@ function loadFromCloud(cb){
 
 var nickname='';
 function startGame(){
-  nickname=document.getElementById('ni').value.trim()||'匿名玩家';
-  document.getElementById('startScreen').style.display='none';
-  P=defaultPlayer();
-  P.name=nickname;
-  P.maxHp=baseHp(P.level);
-  P.hp=P.maxHp;
-  updateTopBar();renderEquipGrid();renderInv();renderPets();
-  renderMaps();renderChests();renderEnhancePanel();
+  // Try auto-login from saved session
+  if(tryAutoLogin())return;
+  // Otherwise show login screen (already visible)
+}
 
-  // Try local save first
-  if(loadGame()){
-    P.maxHp=baseHp(P.level);
-    if(P.hp<=0)P.hp=P.maxHp;
-    updateTopBar();renderEquipGrid();renderInv();renderPets();
-    renderMaps();renderChests();renderEnhancePanel();
-    addLog('💾 已恢复本地存档','info');
-    // Also try cloud in background for newer data
-    loadFromCloud(function(ok){
-      if(ok){
-        P.maxHp=baseHp(P.level);
-        if(P.hp<=0)P.hp=P.maxHp;
-        updateTopBar();renderEquipGrid();renderInv();renderPets();
-        renderMaps();renderChests();renderEnhancePanel();
-      }
-    });
-  }else{
-    // No local save, try cloud
-    addLog('🔍 正在从云端加载存档...','info');
-    loadFromCloud(function(ok){
-      if(!ok){
-        addLog('🗡️ 欢迎新冒险者，'+nickname+'！','info');
-      }
-      P.maxHp=baseHp(P.level);
-      if(P.hp<=0)P.hp=P.maxHp;
-      updateTopBar();renderEquipGrid();renderInv();renderPets();
-      renderMaps();renderChests();renderEnhancePanel();
-    });
-  }
+function doLogout(){
+  saveGame();
+  currentUser=null;nickname='';
+  localStorage.removeItem('rpg_session');
+  if(battleTimer){clearInterval(battleTimer);battleTimer=null;}
+  document.getElementById('startScreen').style.display='';
+  document.getElementById('dUser').textContent='';
+  document.getElementById('authMsg').textContent='';
+  document.getElementById('authPass').value='';
 }
 
 function toggleOverlayLB(){
@@ -655,7 +768,7 @@ function toggleOverlayLB(){
 }
 
 // Auto-save every 30s
-setInterval(function(){if(P.name)saveGame();},30000);
+setInterval(function(){if(currentUser)saveGame();},30000);
 
 // ============================================================
 //  MAP & MONSTER SYSTEM
@@ -1203,7 +1316,7 @@ function submitScore(){
 }
 
 // Submit score periodically and on save
-setInterval(function(){if(P.name)submitScore();},60000);
+setInterval(function(){if(currentUser)submitScore();},60000);
 var origSaveGame=saveGame;
 saveGame=function(){origSaveGame();submitScore();};
 
