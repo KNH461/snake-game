@@ -6,42 +6,241 @@
 <title>🎮 小游戏合集</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#1a1a2e;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#eee;display:flex;flex-direction:column;align-items:center;padding:40px 16px}
+body{background:#1a1a2e;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#eee;display:flex;flex-direction:column;align-items:center;padding:30px 16px}
 h1{font-size:2.2rem;margin-bottom:8px;text-shadow:0 0 20px rgba(0,255,0,0.4)}
-.sub{color:#888;font-size:0.95rem;margin-bottom:40px}
-.games{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;max-width:700px}
+.sub{color:#888;font-size:0.95rem;margin-bottom:30px}
+.games{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;max-width:900px;margin-bottom:36px}
 .game-card{
-  width:280px;background:rgba(0,255,0,0.04);border:1px solid rgba(0,255,0,0.2);
-  border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;
+  width:260px;background:rgba(0,255,0,0.04);border:1px solid rgba(0,255,0,0.2);
+  border-radius:16px;padding:24px 18px;text-align:center;cursor:pointer;
   transition:all 0.2s;text-decoration:none;color:#eee;display:block;
 }
 .game-card:hover{transform:translateY(-4px);border-color:#0f0;box-shadow:0 8px 30px rgba(0,255,0,0.15)}
-.game-card .icon{font-size:4rem;margin-bottom:12px;display:block}
-.game-card h2{font-size:1.3rem;margin-bottom:8px;color:#0f0}
-.game-card p{font-size:0.85rem;color:#888;line-height:1.5}
-.footer{margin-top:auto;padding-top:40px;color:#444;font-size:0.8rem}
+.game-card .icon{font-size:3.5rem;margin-bottom:10px;display:block}
+.game-card h2{font-size:1.2rem;margin-bottom:6px;color:#0f0}
+.game-card p{font-size:0.8rem;color:#888;line-height:1.5}
+.game-card .my-score{margin-top:8px;font-size:0.85rem;color:#ffd700}
+
+/* Player progress */
+.progress-section{width:100%;max-width:900px;margin-bottom:30px}
+.progress-section h2{font-size:1.3rem;color:#0f0;text-align:center;margin-bottom:14px}
+.nick-bar{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.nick-bar input{padding:8px 14px;font-size:0.95rem;border:1px solid rgba(0,255,0,0.4);background:rgba(0,255,0,0.05);color:#0f0;border-radius:6px;outline:none;width:180px;text-align:center}
+.nick-bar input::placeholder{color:rgba(0,255,0,0.3)}
+.nick-bar button{padding:8px 18px;font-size:0.95rem;border:1px solid #0f0;background:transparent;color:#0f0;border-radius:6px;cursor:pointer}
+.nick-bar button:hover{background:rgba(0,255,0,0.1)}
+
+.my-progress{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.progress-card{background:rgba(0,255,0,0.04);border:1px solid rgba(0,255,0,0.2);border-radius:12px;padding:16px 20px;min-width:200px;flex:1;max-width:280px}
+.progress-card h3{font-size:1rem;margin-bottom:8px;color:#0f0;text-align:center}
+.progress-card .stat{display:flex;justify-content:space-between;padding:3px 0;font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.03)}
+.progress-card .stat-label{color:#888}
+.progress-card .stat-val{color:#ffd700;font-weight:bold}
+.no-data{text-align:center;color:#555;font-size:0.85rem;padding:10px}
+
+/* Leaderboard */
+.lb-section{width:100%;max-width:900px}
+.lb-section h2{font-size:1.3rem;color:#0f0;text-align:center;margin-bottom:14px}
+.lb-tabs{display:flex;gap:4px;justify-content:center;margin-bottom:12px}
+.lb-tabs button{padding:6px 16px;font-size:0.85rem;border:1px solid rgba(0,255,0,0.3);background:transparent;color:#888;border-radius:6px;cursor:pointer}
+.lb-tabs button.active{border-color:#0f0;color:#0f0;background:rgba(0,255,0,0.1)}
+.lb-table{width:100%;background:rgba(0,255,0,0.03);border:1px solid rgba(0,255,0,0.15);border-radius:10px;overflow:hidden}
+.lb-row{display:flex;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem;align-items:center}
+.lb-row:first-child{background:rgba(0,255,0,0.05);font-weight:bold;color:#0f0}
+.lb-row .r-rank{width:36px;text-align:center}
+.lb-row .r-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-row .r-score{width:70px;text-align:right;color:#ffd700;font-weight:bold}
+.lb-row .r-extra{width:80px;text-align:right;color:#888;font-size:0.75rem}
+.lb-row.gold{color:#ffd700}
+.lb-row.silver{color:#c0c0c0}
+.lb-row.bronze{color:#cd7f32}
+.lb-status{text-align:center;font-size:0.75rem;color:#666;margin-top:8px}
+.lb-status.online{color:#0f0}
+.footer{margin-top:auto;padding-top:30px;color:#444;font-size:0.8rem}
+@media(max-width:600px){
+  .games{gap:16px}
+  .game-card{width:100%;max-width:300px;padding:20px 14px}
+  .game-card .icon{font-size:3rem}
+  .my-progress{flex-direction:column;align-items:center}
+  .progress-card{min-width:auto;width:100%}
+}
 </style>
 </head>
 <body>
+
 <h1>🎮 小游戏合集</h1>
 <p class="sub">和朋友们一起比拼吧</p>
+
+<!-- Player Progress -->
+<div class="progress-section">
+  <h2>📊 我的进度</h2>
+  <div class="nick-bar">
+    <input type="text" id="nickInput" placeholder="输入昵称查看进度" maxlength="12">
+    <button onclick="loadMyProgress()">查看</button>
+  </div>
+  <div class="my-progress" id="myProgress"></div>
+</div>
+
+<!-- Game Cards -->
 <div class="games">
   <a class="game-card" href="snake.html">
     <span class="icon">🐍</span>
     <h2>贪吃蛇</h2>
     <p>经典贪吃蛇，吃食物长长身体<br>支持键盘、触屏和虚拟按钮</p>
+    <div class="my-score" id="snakeScore"></div>
   </a>
   <a class="game-card" href="tetris.html">
     <span class="icon">🧱</span>
     <h2>俄罗斯方块</h2>
     <p>经典方块消除，挑战你的极限<br>支持键盘和触屏操作</p>
+    <div class="my-score" id="tetrisScore"></div>
   </a>
   <a class="game-card" href="adventure.html">
     <span class="icon">🗡️</span>
-    <h2>文字冒险</h2>
-    <p>探索森林、城堡，击败魔王<br>多种分支和结局等你发现</p>
+    <h2>文字冒险 RPG</h2>
+    <p>挂机刷怪、收集装备、强化升级<br>多种地图和宠物系统</p>
+    <div class="my-score" id="advScore"></div>
   </a>
 </div>
+
+<!-- Leaderboard -->
+<div class="lb-section">
+  <h2>🏆 排行榜</h2>
+  <div class="lb-tabs">
+    <button class="active" onclick="switchLB('snake',this)">🐍 贪吃蛇</button>
+    <button onclick="switchLB('tetris',this)">🧱 俄罗斯方块</button>
+    <button onclick="switchLB('adventure',this)">🗡️ 文字冒险</button>
+  </div>
+  <div class="lb-table" id="lbTable"></div>
+  <div class="lb-status" id="lbStatus"></div>
+</div>
+
 <p class="footer">Made with ❤️</p>
+
+<script>
+// API configs for each game
+var GAMES={
+  snake:{bin:'6a1b0396ddf5aa59f778b27f',key:'players',name:'贪吃蛇',unit:'分'},
+  tetris:{bin:'6a1b0748ddf5aa59f778bc7a',key:'players',name:'俄罗斯方块',unit:'分'},
+  adventure:{bin:'6a1b0748ddf5aa59f778bc7a',key:'adv_players',name:'文字冒险',unit:'分'}
+};
+var AK='$2a$10$JDS9gl1LtJJ1GfLQy013YOEMq8xzl5QLHxoKGghwH7uIRxVbZQZNi';
+var allData={}; // gameKey -> {playerName: {best, level, games, ...}}
+var currentLB='snake';
+var myNick=localStorage.getItem('lobby_nick')||'';
+
+var nickInput=document.getElementById('nickInput');
+if(myNick)nickInput.value=myNick;
+
+// Fetch all game data
+function fetchAll(){
+  Object.keys(GAMES).forEach(function(gKey){
+    var g=GAMES[gKey];
+    var x=new XMLHttpRequest();
+    x.open('GET','https://api.jsonbin.io/v3/b/'+g.bin+'/latest',true);
+    x.setRequestHeader('X-Master-Key',AK);
+    x.onload=function(){
+      if(x.status===200){
+        try{
+          var d=JSON.parse(x.responseText);
+          allData[gKey]=d.record[g.key]||{};
+        }catch(e){}
+      }
+      renderAll();
+    };
+    x.onerror=function(){};
+    x.send();
+  });
+}
+
+function renderAll(){
+  renderMyProgress();
+  renderLB(currentLB);
+  renderGameCards();
+}
+
+// Render my progress cards
+function renderMyProgress(){
+  if(!myNick){document.getElementById('myProgress').innerHTML='<div class="no-data">输入昵称查看你的游戏进度</div>';return;}
+  var h='';
+  // Snake
+  var sd=(allData.snake||{})[myNick];
+  h+='<div class="progress-card"><h3>🐍 贪吃蛇</h3>';
+  if(sd){h+=statRow('最高分',sd.best||0)+statRow('游戏次数',sd.games||0);}
+  else h+='<div class="no-data">暂无记录</div>';
+  h+='</div>';
+  // Tetris
+  var td=(allData.tetris||{})[myNick];
+  h+='<div class="progress-card"><h3>🧱 俄罗斯方块</h3>';
+  if(td){h+=statRow('最高分',td.best||0)+statRow('游戏次数',td.games||0);}
+  else h+='<div class="no-data">暂无记录</div>';
+  h+='</div>';
+  // Adventure
+  var ad=(allData.adventure||{})[myNick];
+  h+='<div class="progress-card"><h3>🗡️ 文字冒险</h3>';
+  if(ad){h+=statRow('最高分',ad.best||0)+statRow('等级',ad.level||1)+statRow('游戏次数',ad.games||0);}
+  else h+='<div class="no-data">暂无记录</div>';
+  h+='</div>';
+  document.getElementById('myProgress').innerHTML=h;
+}
+
+function statRow(label,val){
+  return '<div class="stat"><span class="stat-label">'+label+'</span><span class="stat-val">'+val+'</span></div>';
+}
+
+// Render game card my-score badges
+function renderGameCards(){
+  var sd=(allData.snake||{})[myNick];
+  document.getElementById('snakeScore').textContent=sd?'我的最高: '+(sd.best||0):'';
+  var td=(allData.tetris||{})[myNick];
+  document.getElementById('tetrisScore').textContent=td?'我的最高: '+(td.best||0):'';
+  var ad=(allData.adventure||{})[myNick];
+  document.getElementById('advScore').textContent=ad?'我的最高: '+(ad.best||0)+' · Lv.'+(ad.level||1):'';
+}
+
+// Render leaderboard table
+function renderLB(gameKey){
+  var data=allData[gameKey]||{};
+  var entries=[];
+  for(var n in data)entries.push({name:n,score:data[n].best||0,level:data[n].level||1,games:data[n].games||0});
+  entries.sort(function(a,b){return b.score-a.score;});
+  entries=entries.slice(0,20);
+
+  var h='<div class="lb-row"><span class="r-rank">#</span><span class="r-name">玩家</span><span class="r-score">最高分</span><span class="r-extra">'+(gameKey==='adventure'?'等级':'场次')+'</span></div>';
+  if(!entries.length){
+    h+='<div class="lb-row"><span class="r-name" style="text-align:center;color:#555;width:100%">暂无记录</span></div>';
+  }else{
+    entries.forEach(function(e,i){
+      var cls=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+      var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+      var extra=gameKey==='adventure'?'Lv.'+e.level:(e.games+'场');
+      var hl=e.name===myNick?' style="background:rgba(0,255,0,0.06)"':'';
+      h+='<div class="lb-row '+cls+'"'+hl+'><span class="r-rank">'+medal+'</span><span class="r-name">'+esc(e.name)+'</span><span class="r-score">'+e.score+'</span><span class="r-extra">'+extra+'</span></div>';
+    });
+  }
+  document.getElementById('lbTable').innerHTML=h;
+  document.getElementById('lbStatus').textContent='✅ 已同步 · '+new Date().toLocaleTimeString();
+  document.getElementById('lbStatus').className='lb-status online';
+}
+
+function switchLB(gameKey,btn){
+  currentLB=gameKey;
+  document.querySelectorAll('.lb-tabs button').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderLB(gameKey);
+}
+
+function loadMyProgress(){
+  myNick=nickInput.value.trim();
+  localStorage.setItem('lobby_nick',myNick);
+  renderAll();
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Init
+fetchAll();
+setInterval(fetchAll,30000);
+</script>
 </body>
 </html>
