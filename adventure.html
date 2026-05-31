@@ -99,6 +99,8 @@ a{color:#0f0;text-decoration:none}
 
 /* Inventory list */
 .inv-list{max-height:200px;overflow-y:auto}
+.inv-tab{padding:3px 10px;font-size:0.7rem;border:1px solid rgba(0,255,0,0.25);background:transparent;color:#888;border-radius:4px;cursor:pointer}
+.inv-tab.active{border-color:#0f0;color:#0f0;background:rgba(0,255,0,0.1)}
 .inv-item{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:0.75rem;cursor:pointer;border-radius:4px;transition:background 0.1s}
 .inv-item:hover{background:rgba(0,255,0,0.08)}
 .inv-item .inv-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -189,7 +191,13 @@ a{color:#0f0;text-decoration:none}
     <div class="section-title">⚔️ 装备栏</div>
     <div class="equip-grid" id="equipGrid"></div>
     <div class="section-title">🎒 背包 <span id="invCount" style="color:#888;font-size:0.75rem">(0/30)</span></div>
+    <div style="display:flex;gap:4px;margin-bottom:6px" id="invTabs">
+      <button class="inv-tab active" onclick="setInvTab('all',this)">全部</button>
+      <button class="inv-tab" onclick="setInvTab('equip',this)">装备</button>
+      <button class="inv-tab" onclick="setInvTab('mat',this)">材料</button>
+    </div>
     <div class="inv-list" id="invList"></div>
+    <div id="matDesc" style="display:none;font-size:0.75rem;background:rgba(0,255,0,0.04);border:1px solid rgba(0,255,0,0.15);border-radius:6px;padding:8px;margin-top:6px"></div>
   </div>
 
   <!-- Center Panel: Map + Combat -->
@@ -380,20 +388,87 @@ function getEquipGridHTML(){
 
 function renderEquipGrid(){document.getElementById('equipGrid').innerHTML=getEquipGridHTML();}
 
-function getInvHTML(){
-  if(!P.inventory.length)return '<div style="color:#555;font-size:0.75rem;padding:8px;text-align:center">背包为空</div>';
-  var h='';
-  P.inventory.forEach(function(it,i){
-    var q=QUALITY_MAP[it.quality];
-    h+='<div class="inv-item" onmouseenter="showTooltip(event,\''+it.id+'\',\'inv\')" onmouseleave="hideTooltip()">';
-    h+='<span class="inv-name q-'+it.quality+'">'+it.name+(it.enhance>0?'+'+it.enhance:'')+'</span>';
-    h+='<span class="inv-ops">';
-    h+='<button onclick="equipItem('+i+')">装备</button>';
-    h+='<button onclick="sellItem('+i+')">出售</button>';
-    h+='</span></div>';
-  });
-  return h;
+// ============================================================
+//  MATERIAL DEFINITIONS
+// ============================================================
+
+var MAT_INFO={
+  '草药':{icon:'🌿',desc:'翡翠草原的常见草药。可用于制作初级回复药水，回复少量生命值。',source:'翡翠草原',use:'合成材料'},
+  '碎石':{icon:'🪨',desc:'普通的石头碎片。可用于强化低级装备，是最基础的强化辅料。',source:'翡翠草原',use:'低级强化辅料'},
+  '毒牙':{icon:'🦷',desc:'毒蛇的尖牙，带有微量毒素。可用于淬毒武器，增加攻击时的中毒概率。',source:'暗影森林',use:'武器淬毒材料'},
+  '暗影精华':{icon:'🔮',desc:'暗影生物消散后留下的能量结晶。可用于重铸装备，赋予装备暗影属性。',source:'暗影森林',use:'重铸辅料'},
+  '火焰石':{icon:'🔥',desc:'蕴含火焰之力的矿石。可用于强化武器，额外增加攻击力。',source:'熔岩洞穴',use:'高级强化辅料（武器）'},
+  '熔岩碎片':{icon:'🧱',desc:'熔岩冷却后形成的碎片，异常坚硬。可用于强化防具，额外增加防御力。',source:'熔岩洞穴',use:'高级强化辅料（防具）'},
+  '冰晶':{icon:'❄️',desc:'永冻之冰凝结而成的晶石。可用于重铸装备，赋予装备冰霜属性。',source:'冰霜山脉',use:'重铸辅料'},
+  '龙鳞碎片':{icon:'🐲',desc:'冰龙幼崽脱落的鳞片碎片。稀有材料，可用于合成高级宠物装备。',source:'冰霜山脉',use:'宠物装备材料'},
+  '深渊碎片':{icon:'💎',desc:'深渊裂隙中掉落的空间碎片。蕴含强大的空间之力，可用于突破装备强化上限。',source:'深渊裂隙',use:'突破强化+7以上'},
+  '灵魂结晶':{icon:'👻',desc:'凝聚了无数灵魂的结晶体。可用于重铸传说品质以上装备。',source:'深渊裂隙',use:'传说级重铸辅料'},
+  '魔王之血':{icon:'🩸',desc:'魔王体内流淌的黑暗之血。极其稀有，可用于合成神话品质装备。',source:'魔王领域',use:'神话装备合成材料'},
+  '暗黑结晶':{icon:'🌑',desc:'魔王领域中凝聚的黑暗能量结晶。可用于终极重铸，大幅提升装备属性。',source:'魔王领域',use:'终极重铸材料'},
+  '强化石':{icon:'⚒️',desc:'通用的强化材料。用于装备强化，强化等级越高消耗越多。所有怪物均有概率掉落。',source:'所有怪物（10%）',use:'装备强化必备材料'},
+  '重铸石':{icon:'🔄',desc:'蕴含随机之力的神奇石头。用于重铸装备，重新随机装备的属性值。',source:'所有怪物（5%）',use:'装备重铸必备材料'}
+};
+
+// Inventory tab state
+var invTab='all';
+function setInvTab(tab,btn){
+  invTab=tab;
+  document.querySelectorAll('.inv-tab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderInv();
+  document.getElementById('matDesc').style.display='none';
 }
+
+function showMatDesc(matName){
+  var info=MAT_INFO[matName];
+  if(!info)return;
+  var el=document.getElementById('matDesc');
+  el.style.display='block';
+  el.innerHTML='<div style="color:#0f0;font-weight:bold;margin-bottom:4px">'+info.icon+' '+matName+'</div>'+
+    '<div style="color:#ccc;line-height:1.5;margin-bottom:4px">'+info.desc+'</div>'+
+    '<div style="color:#888">来源: '+info.source+'<br>用途: '+info.use+'</div>';
+}
+
+function getInvHTML(){
+  var hasEquip=P.inventory.length>0;
+  var hasMat=false;
+  for(var k in P.materials){if(P.materials[k]>0){hasMat=true;break;}}
+  
+  if(invTab==='all'&&!hasEquip&&!hasMat)return '<div style="color:#555;font-size:0.75rem;padding:8px;text-align:center">背包为空</div>';
+  if(invTab==='equip'&&!hasEquip)return '<div style="color:#555;font-size:0.75rem;padding:8px;text-align:center">没有装备</div>';
+  if(invTab==='mat'&&!hasMat)return '<div style="color:#555;font-size:0.75rem;padding:8px;text-align:center">没有材料</div>';
+
+  var h='';
+
+  // Equipment items
+  if(invTab==='all'||invTab==='equip'){
+    P.inventory.forEach(function(it,i){
+      var q=QUALITY_MAP[it.quality];
+      h+='<div class="inv-item" onmouseenter="showTooltip(event,\''+it.id+'\',\'inv\')" onmouseleave="hideTooltip()">';
+      h+='<span class="inv-name q-'+it.quality+'">'+it.name+(it.enhance>0?'+'+it.enhance:'')+'</span>';
+      h+='<span class="inv-ops">';
+      h+='<button onclick="equipItem('+i+')">装备</button>';
+      h+='<button onclick="sellItem('+i+')">出售</button>';
+      h+='</span></div>';
+    });
+  }
+
+  // Materials
+  if(invTab==='all'||invTab==='mat'){
+    var matKeys=Object.keys(P.materials).filter(function(k){return P.materials[k]>0;});
+    if(matKeys.length&&(invTab==='all'&&hasEquip))h+='<div style="border-top:1px solid rgba(255,255,255,0.05);margin:4px 0"></div>';
+    matKeys.forEach(function(mat){
+      var info=MAT_INFO[mat]||{icon:'📦',desc:''};
+      h+='<div class="inv-item" style="cursor:pointer" onclick="showMatDesc(\''+mat+'\')">';
+      h+='<span class="inv-name">'+info.icon+' '+mat+'</span>';
+      h+='<span style="color:#888;font-size:0.75rem">×'+P.materials[mat]+'</span>';
+      h+='</div>';
+    });
+  }
+
+  return h||'<div style="color:#555;font-size:0.75rem;padding:8px;text-align:center">空</div>';
+}
+
 function renderInv(){
   document.getElementById('invList').innerHTML=getInvHTML();
   document.getElementById('invCount').textContent='('+P.inventory.length+'/30)';
